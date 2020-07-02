@@ -438,6 +438,8 @@ typedef struct cgltf_primitive {
 	cgltf_size attributes_count;
 	cgltf_morph_target* targets;
 	cgltf_size targets_count;
+	char** target_names;
+	cgltf_size target_names_count;
 	cgltf_extras extras;
 	cgltf_bool has_draco_mesh_compression;
 	cgltf_draco_mesh_compression draco_mesh_compression;
@@ -581,6 +583,8 @@ typedef struct cgltf_asset {
 	cgltf_extension* extensions;
 } cgltf_asset;
 
+#include "vrm/vrm_types.h"
+
 typedef struct cgltf_data
 {
 	cgltf_file_type file_type;
@@ -651,6 +655,8 @@ typedef struct cgltf_data
 
 	cgltf_memory_options memory;
 	cgltf_file_options file;
+
+	cgltf_vrm vrm;
 } cgltf_data;
 
 cgltf_result cgltf_parse(
@@ -1363,10 +1369,14 @@ cgltf_result cgltf_validate(cgltf_data* data)
 
 		for (cgltf_size j = 0; j < data->meshes[i].primitives_count; ++j)
 		{
-			if (data->meshes[i].primitives[j].targets_count != data->meshes[i].primitives[0].targets_count)
-			{
-				return cgltf_result_invalid_gltf;
-			}
+			//
+			// Skip target count check because some VRM files omit targets for root primitive
+			// which is not valid for glTF but has been accepted for VRM 
+			//
+			//if (data->meshes[i].primitives[j].targets_count != data->meshes[i].primitives[0].targets_count)
+			//{
+			//	return cgltf_result_invalid_gltf;
+			//}
 
 			if (data->meshes[i].primitives[j].attributes_count)
 			{
@@ -1535,6 +1545,8 @@ void cgltf_free(cgltf_data* data)
 
 	void (*file_release)(const struct cgltf_memory_options*, const struct cgltf_file_options*, void* data) = data->file.release ? data->file.release : cgltf_default_file_release;
 
+	cgltf_vrm_free(&data->memory, &data->vrm);
+
 	data->memory.free(data->memory.user_data, data->asset.copyright);
 	data->memory.free(data->memory.user_data, data->asset.generator);
 	data->memory.free(data->memory.user_data, data->asset.version);
@@ -1597,6 +1609,13 @@ void cgltf_free(cgltf_data* data)
 			}
 
 			data->memory.free(data->memory.user_data, data->meshes[i].primitives[j].targets);
+
+			for (cgltf_size k = 0; k < data->meshes[i].primitives[j].target_names_count; ++k)
+			{
+				data->memory.free(data->memory.user_data, data->meshes[i].primitives[j].target_names[k]);
+			}
+
+			data->memory.free(data->memory.user_data, data->meshes[i].primitives[j].target_names);
 
 			if (data->meshes[i].primitives[j].has_draco_mesh_compression)
 			{
@@ -2526,7 +2545,39 @@ static int cgltf_parse_json_primitive(cgltf_options* options, jsmntok_t const* t
 		}
 		else if (cgltf_json_strcmp(tokens + i, json_chunk, "extras") == 0)
 		{
-			i = cgltf_parse_json_extras(tokens, i + 1, json_chunk, &out_prim->extras);
+			// 
+			// Extract mesh.primitives.extras.targetNames here because some tools store targetNames here instead of mesh.extras.targetNames
+			//
+			++i;
+
+			if (tokens[i].type == JSMN_OBJECT)
+			{
+				int extras_size = tokens[i].size;
+				++i;
+
+				for (int k = 0; k < extras_size; ++k)
+				{
+					CGLTF_CHECK_KEY(tokens[i]);
+
+					if (cgltf_json_strcmp(tokens + i, json_chunk, "targetNames") == 0)
+					{
+						i = cgltf_parse_json_string_array(options, tokens, i + 1, json_chunk, &out_prim->target_names, &out_prim->target_names_count);
+					}
+					else
+					{
+						i = cgltf_skip_json(tokens, i + 1);
+					}
+
+					if (i < 0)
+					{
+						return i;
+					}
+				}
+			}
+			else
+			{
+				i = cgltf_parse_json_extras(tokens, i + 1, json_chunk, &out_prim->extras);
+			}
 		}
 		else if (cgltf_json_strcmp(tokens + i, json_chunk, "extensions") == 0)
 		{
