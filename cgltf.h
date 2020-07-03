@@ -1381,10 +1381,12 @@ cgltf_result cgltf_validate(cgltf_data* data)
 			if (data->meshes[i].primitives[j].attributes_count)
 			{
 				cgltf_accessor* first = data->meshes[i].primitives[j].attributes[0].data;
+				if (first == NULL) continue;
 
 				for (cgltf_size k = 0; k < data->meshes[i].primitives[j].attributes_count; ++k)
 				{
-					if (data->meshes[i].primitives[j].attributes[k].data->count != first->count)
+					cgltf_accessor* accessor = data->meshes[i].primitives[j].attributes[k].data;
+					if (accessor && accessor->count != first->count)
 					{
 						return cgltf_result_invalid_gltf;
 					}
@@ -1394,7 +1396,8 @@ cgltf_result cgltf_validate(cgltf_data* data)
 				{
 					for (cgltf_size m = 0; m < data->meshes[i].primitives[j].targets[k].attributes_count; ++m)
 					{
-						if (data->meshes[i].primitives[j].targets[k].attributes[m].data->count != first->count)
+						cgltf_accessor* accessor = data->meshes[i].primitives[j].targets[k].attributes[m].data;
+						if (accessor && accessor->count != first->count)
 						{
 							return cgltf_result_invalid_gltf;
 						}
@@ -2376,8 +2379,16 @@ static int cgltf_parse_json_attribute_list(cgltf_options* options, jsmntok_t con
 
 		cgltf_parse_attribute_type((*out_attributes)[j].name, &(*out_attributes)[j].type, &(*out_attributes)[j].index);
 
-		(*out_attributes)[j].data = CGLTF_PTRINDEX(cgltf_accessor, cgltf_json_to_int(tokens + i, json_chunk));
-		++i;
+		if ((*out_attributes)[j].type != cgltf_attribute_type_invalid)
+		{
+			(*out_attributes)[j].data = CGLTF_PTRINDEX(cgltf_accessor, cgltf_json_to_int(tokens + i, json_chunk));
+			++i;
+		}
+		else if (strncmp((*out_attributes)[j].name, "extra", 5) == 0)
+		{
+			// Some VRM files store morph name in "extra" in attributes. Just skip it for now.
+			i = cgltf_skip_json(tokens, i + 1 + tokens[i].size);
+		}
 	}
 
 	return i;
@@ -4260,6 +4271,59 @@ static int cgltf_parse_json_lights(cgltf_options* options, jsmntok_t const* toke
 	return i;
 }
 
+static int cgltf_vrm_parse_json_meta(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, cgltf_vrm* out_data)
+{
+	CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_OBJECT);
+
+	int size = tokens[i].size;
+	++i;
+
+	for (int j = 0; j < size; ++j)
+	{
+		CGLTF_CHECK_KEY(tokens[i]);
+
+		// TODO
+		if (cgltf_json_strcmp(tokens + i, json_chunk, "title") == 0)
+		{
+			i = cgltf_parse_json_string(options, tokens, i + 1, json_chunk, &out_data->meta.title);
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "version") == 0)
+		{
+			i = cgltf_parse_json_string(options, tokens, i + 1, json_chunk, &out_data->meta.version);
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "author") == 0)
+		{
+			i = cgltf_parse_json_string(options, tokens, i + 1, json_chunk, &out_data->meta.author);
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "contactInformation") == 0)
+		{
+			i = cgltf_parse_json_string(options, tokens, i + 1, json_chunk, &out_data->meta.contactInformation);
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "reference") == 0)
+		{
+			i = cgltf_parse_json_string(options, tokens, i + 1, json_chunk, &out_data->meta.reference);
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "texture") == 0)
+		{
+			++i;
+			out_data->meta.texture = cgltf_json_to_int(tokens + i, json_chunk);
+			++i;
+		}
+		else
+		{
+			i = cgltf_skip_json(tokens, i + 1);
+		}
+
+		if (i < 0)
+		{
+			return i;
+		}
+	}
+
+	return i;
+
+}
+
 static int cgltf_parse_json_node(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, cgltf_node* out_node)
 {
 	CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_OBJECT);
@@ -5007,6 +5071,34 @@ static int cgltf_parse_json_root(cgltf_options* options, jsmntok_t const* tokens
 						}
 					}
 				}
+				else if (cgltf_json_strcmp(tokens + i, json_chunk, "VRM") == 0)
+				{
+					++i;
+
+					CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_OBJECT);
+
+					int data_size = tokens[i].size;
+					++i;
+
+					for (int m = 0; m < data_size; ++m)
+					{
+						CGLTF_CHECK_KEY(tokens[i]);
+
+						if (cgltf_json_strcmp(tokens + i, json_chunk, "meta") == 0)
+						{
+							i = cgltf_vrm_parse_json_meta(options, tokens, i + 1, json_chunk, &out_data->vrm);
+						}
+						else
+						{
+							i = cgltf_skip_json(tokens, i + 1);
+						}
+
+						if (i < 0)
+						{
+							return i;
+						}
+					}
+				}
 				else
 				{
 					i = cgltf_parse_json_unprocessed_extension(options, tokens, i, json_chunk, &(out_data->data_extensions[out_data->data_extensions_count++]));
@@ -5137,7 +5229,9 @@ static int cgltf_fixup_pointers(cgltf_data* data)
 			{
 				for (cgltf_size m = 0; m < data->meshes[i].primitives[j].targets[k].attributes_count; ++m)
 				{
-					CGLTF_PTRFIXUP_REQ(data->meshes[i].primitives[j].targets[k].attributes[m].data, data->accessors, data->accessors_count);
+					if (data->meshes[i].primitives[j].targets[k].attributes[m].type != cgltf_attribute_type_invalid) {
+						CGLTF_PTRFIXUP(data->meshes[i].primitives[j].targets[k].attributes[m].data, data->accessors, data->accessors_count);
+					}
 				}
 			}
 
