@@ -2247,6 +2247,23 @@ static int cgltf_parse_json_float_array(jsmntok_t const* tokens, int i, const ui
 	return i;
 }
 
+static int cgltf_parse_json_int_array(jsmntok_t const* tokens, int i, const uint8_t* json_chunk, int* out_array, int size)
+{
+	CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_ARRAY);
+	if (tokens[i].size != size)
+	{
+		return CGLTF_ERROR_JSON;
+	}
+	++i;
+	for (int j = 0; j < size; ++j)
+	{
+		CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_PRIMITIVE);
+		out_array[j] = cgltf_json_to_int(tokens + i, json_chunk);
+		++i;
+	}
+	return i;
+}
+
 static int cgltf_parse_json_string(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, char** out_string)
 {
 	CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_STRING);

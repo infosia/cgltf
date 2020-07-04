@@ -12,7 +12,6 @@
 extern "C" {
 #endif
 
-#include <string.h>
 typedef enum cgltf_vrm_blendshape_group_presetName {
 	cgltf_vrm_blendshape_group_presetName_unknown,
 	cgltf_vrm_blendshape_group_presetName_neutral,
@@ -175,6 +174,7 @@ typedef struct cgltf_vrm_blendshape_materialbind {
 
 typedef struct cgltf_vrm_blendshape_group {
 	char* name;
+	cgltf_vrm_blendshape_group_presetName presetName;
 	cgltf_vrm_blendshape_bind* binds;
 	cgltf_size binds_count;
 	cgltf_vrm_blendshape_materialbind* materialValues;
@@ -204,6 +204,7 @@ typedef struct cgltf_vrm_firstperson {
 	cgltf_float* firstPersonBoneOffset; // [x, y, z]
 	cgltf_vrm_firstperson_meshannotation* meshAnnotations;
 	cgltf_size meshAnnotations_count;
+	cgltf_vrm_firstperson_lookAtTypeName lookAtTypeName;
 	cgltf_vrm_firstperson_degreemap lookAtHorizontalInner;
 	cgltf_vrm_firstperson_degreemap lookAtHorizontalOuter;
 	cgltf_vrm_firstperson_degreemap lookAtVerticalDown;
@@ -211,6 +212,7 @@ typedef struct cgltf_vrm_firstperson {
 } cgltf_vrm_firstperson;
 
 typedef struct cgltf_vrm_humanoid_bone {
+	cgltf_vrm_humanoid_bone_bone bone;
 	cgltf_int node;
 	cgltf_bool useDefaultValues;
 	cgltf_float* min; // [x, y, z]
@@ -260,7 +262,12 @@ typedef struct cgltf_vrm_meta {
 	char* contactInformation;
 	char* reference;
 	cgltf_int texture;
+	cgltf_vrm_meta_allowedUserName allowedUserName;
+	cgltf_vrm_meta_violentUssageName violentUssageName;
+	cgltf_vrm_meta_sexualUssageName sexualUssageName;
+	cgltf_vrm_meta_commercialUssageName commercialUssageName;
 	char* otherPermissionUrl;
+	cgltf_vrm_meta_licenseName licenseName;
 	char* otherLicenseUrl;
 } cgltf_vrm_meta;
 
