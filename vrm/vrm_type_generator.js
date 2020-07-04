@@ -45,8 +45,15 @@ function parse(json, file, rootType, subType) {
 	let dependencies_def = [];
 	let free_def = [];
 	let enum_selector_def = [];
+	let parse_def = [];
 
 	free_def.push('static void ' + typename + '_free(const struct cgltf_memory_options* memory, ' + typename + '* data) {');
+	parse_def.push('static int cgltf_parse_json_' + typename.replace('cgltf_', '') + '(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, ' + typename +'* out_data) {');
+	parse_def.push(indent + 'if (tokens[i].type == JSMN_OBJECT) {');
+	parse_def.push(indent + indent + 'int size = tokens[i].size; ++i;');
+	parse_def.push(indent + indent + 'for (int j = 0; j < size; ++j) {');
+	parse_def.push(indent + indent + indent + 'if (tokens[i].type != JSMN_STRING || tokens[i].size == 0) {');
+	parse_def.push(indent + indent + indent + indent + 'continue;');
 
 	structs_def.push('typedef struct ' + typename + ' {')
 
@@ -80,6 +87,8 @@ function parse(json, file, rootType, subType) {
 			} else {
 				structs_def.push(indent + 'char* ' + name + ';');
 				free_def.push(indent + 'memory->free(memory->user_data, data->' + name + ');');
+				parse_def.push(indent + indent + indent + '} else if (cgltf_json_strcmp(tokens + i, json_chunk, "' + name + '") == 0) {');
+				parse_def.push(indent + indent + indent + indent + 'i = cgltf_parse_json_string(options, tokens, i + 1, json_chunk, &out_data->' + name + ');');
 			}
 		} else if (primitive) {
 			structs_def.push(indent + primitive + ' ' + name + ';');
@@ -163,7 +172,20 @@ function parse(json, file, rootType, subType) {
 
 	free_def.push('}');
 
-	return {enums:enums_def, structs:structs_def, dependencies:dependencies_def, free: free_def, enum_selector:enum_selector_def};
+	parse_def.push(indent + indent + indent + '} else {');
+	parse_def.push(indent + indent + indent + indent + 'i = cgltf_skip_json(tokens, i + 1);');
+	parse_def.push(indent + indent + indent +'}');
+	parse_def.push(indent + indent + indent + 'if (i < 0) return i;');
+	parse_def.push(indent + indent + '}');
+	parse_def.push(indent + '} else {');
+	parse_def.push(indent + indent + 'i = cgltf_skip_json(tokens, i + 1);');
+	parse_def.push(indent + '}');
+	parse_def.push(indent + 'return i;');
+
+	parse_def.push('}');
+
+	return {enums:enums_def, structs:structs_def, dependencies:dependencies_def,
+			 free: free_def, enum_selector:enum_selector_def, parse: parse_def};
 }
 
 fs.readdir(basepath, (err, files) => {
@@ -176,6 +198,7 @@ fs.readdir(basepath, (err, files) => {
 	let dependencies_def = [];
 	let free_def = [];
 	let enum_selector_def = [];
+	let parse_def = [];
 
     files.filter(file => /.*\.json$/.test(file)).forEach(file => {
 		const json = JSON.parse(fs.readFileSync(path.join(basepath, file), 'utf8'));
@@ -186,6 +209,7 @@ fs.readdir(basepath, (err, files) => {
 		if (defs.structs) structs_def = structs_def.concat(defs.structs);
 		if (defs.free) free_def = free_def.concat(defs.free);
 		if (defs.enum_selector) enum_selector_def = enum_selector_def.concat(defs.enum_selector);
+		if (defs.parse) parse_def = parse_def.concat(defs.parse);
     });
 
     console.log(enums_def.join('\n'));
@@ -194,10 +218,12 @@ fs.readdir(basepath, (err, files) => {
 	    console.log(deps.structs.join('\n'));
 	    if (deps.free) free_def = deps.free.concat(free_def);
 		if (deps.enum_selector) enum_selector_def = enum_selector_def.concat(deps.enum_selector);
+	    if (deps.parse) parse_def = deps.parse.concat(parse_def);
     });
     console.log(structs_def.join('\n'));
     console.log(free_def.join('\n'));
 	console.log(enum_selector_def.join('\n'));
+	console.log(parse_def.join('\n'));
 
 	console.log(fs.readFileSync(path.join(__dirname, 'vrm_types_footer.txt'), 'utf8'));
 });
