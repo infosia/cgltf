@@ -311,6 +311,7 @@ typedef struct cgltf_attribute
 	cgltf_attribute_type type;
 	cgltf_int index;
 	cgltf_accessor* data;
+	char* value; // store value when attribute has morph name
 } cgltf_attribute;
 
 typedef struct cgltf_image
@@ -2386,8 +2387,24 @@ static int cgltf_parse_json_attribute_list(cgltf_options* options, jsmntok_t con
 		}
 		else if (strncmp((*out_attributes)[j].name, "extra", 5) == 0)
 		{
-			// Some VRM files store morph name in "extra" in attributes. Just skip it for now.
-			i = cgltf_skip_json(tokens, i + 1 + tokens[i].size);
+			// Some VRM files store morph name in "extra.name" inside attributes.
+			// In that case save morph name into "value" field.
+			++i;
+			if (tokens[i].type == JSMN_STRING) 
+			{
+				if (cgltf_json_strcmp(tokens + i, json_chunk, "name") == 0)
+				{
+					i = cgltf_parse_json_string(options, tokens, i + 1, json_chunk, &(*out_attributes)[j].value);
+				}
+				else
+				{
+					i = cgltf_skip_json(tokens, i + 1);
+				}
+			}
+			else
+			{
+				i = cgltf_skip_json(tokens, i + tokens[i].size);
+			}
 		}
 	}
 
