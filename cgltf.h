@@ -1540,6 +1540,8 @@ void cgltf_free_extensions(cgltf_data* data, cgltf_extension* extensions, cgltf_
 	data->memory.free(data->memory.user_data, extensions);
 }
 
+static void cgltf_vrm_free(const struct cgltf_memory_options* memory, cgltf_vrm* data);
+
 void cgltf_free(cgltf_data* data)
 {
 	if (!data)
@@ -4288,59 +4290,6 @@ static int cgltf_parse_json_lights(cgltf_options* options, jsmntok_t const* toke
 	return i;
 }
 
-static int cgltf_vrm_parse_json_meta(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, cgltf_vrm* out_data)
-{
-	CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_OBJECT);
-
-	int size = tokens[i].size;
-	++i;
-
-	for (int j = 0; j < size; ++j)
-	{
-		CGLTF_CHECK_KEY(tokens[i]);
-
-		// TODO
-		if (cgltf_json_strcmp(tokens + i, json_chunk, "title") == 0)
-		{
-			i = cgltf_parse_json_string(options, tokens, i + 1, json_chunk, &out_data->meta.title);
-		}
-		else if (cgltf_json_strcmp(tokens + i, json_chunk, "version") == 0)
-		{
-			i = cgltf_parse_json_string(options, tokens, i + 1, json_chunk, &out_data->meta.version);
-		}
-		else if (cgltf_json_strcmp(tokens + i, json_chunk, "author") == 0)
-		{
-			i = cgltf_parse_json_string(options, tokens, i + 1, json_chunk, &out_data->meta.author);
-		}
-		else if (cgltf_json_strcmp(tokens + i, json_chunk, "contactInformation") == 0)
-		{
-			i = cgltf_parse_json_string(options, tokens, i + 1, json_chunk, &out_data->meta.contactInformation);
-		}
-		else if (cgltf_json_strcmp(tokens + i, json_chunk, "reference") == 0)
-		{
-			i = cgltf_parse_json_string(options, tokens, i + 1, json_chunk, &out_data->meta.reference);
-		}
-		else if (cgltf_json_strcmp(tokens + i, json_chunk, "texture") == 0)
-		{
-			++i;
-			out_data->meta.texture = cgltf_json_to_int(tokens + i, json_chunk);
-			++i;
-		}
-		else
-		{
-			i = cgltf_skip_json(tokens, i + 1);
-		}
-
-		if (i < 0)
-		{
-			return i;
-		}
-	}
-
-	return i;
-
-}
-
 static int cgltf_parse_json_node(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, cgltf_node* out_node)
 {
 	CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_OBJECT);
@@ -4956,6 +4905,8 @@ static cgltf_size cgltf_calc_size(cgltf_type type, cgltf_component_type componen
 	return component_size * cgltf_num_components(type);
 }
 
+#include "vrm/vrm_types.inl"
+
 static int cgltf_fixup_pointers(cgltf_data* out_data);
 
 static int cgltf_parse_json_root(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, cgltf_data* out_data)
@@ -5090,6 +5041,8 @@ static int cgltf_parse_json_root(cgltf_options* options, jsmntok_t const* tokens
 				}
 				else if (cgltf_json_strcmp(tokens + i, json_chunk, "VRM") == 0)
 				{
+					// TODO 
+
 					++i;
 
 					CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_OBJECT);
@@ -5101,14 +5054,7 @@ static int cgltf_parse_json_root(cgltf_options* options, jsmntok_t const* tokens
 					{
 						CGLTF_CHECK_KEY(tokens[i]);
 
-						if (cgltf_json_strcmp(tokens + i, json_chunk, "meta") == 0)
-						{
-							i = cgltf_vrm_parse_json_meta(options, tokens, i + 1, json_chunk, &out_data->vrm);
-						}
-						else
-						{
-							i = cgltf_skip_json(tokens, i + 1);
-						}
+						i = cgltf_skip_json(tokens, i + 1);
 
 						if (i < 0)
 						{

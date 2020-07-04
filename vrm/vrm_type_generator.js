@@ -191,7 +191,10 @@ function parse(json, file, rootType, subType) {
 fs.readdir(basepath, (err, files) => {
     if (err) throw err;
 
-	console.log(fs.readFileSync(path.join(__dirname, 'vrm_types_header.txt'), 'utf8'));
+    let typesStream = fs.createWriteStream(path.join(__dirname, 'vrm_types.h'), 'utf8');
+    let inlStream   = fs.createWriteStream(path.join(__dirname, 'vrm_types.inl'), 'utf8');
+
+	typesStream.write(fs.readFileSync(path.join(__dirname, 'vrm_types_header.txt'), 'utf8'));
 
    	let structs_def = [];
 	let enums_def   = [];
@@ -212,20 +215,23 @@ fs.readdir(basepath, (err, files) => {
 		if (defs.parse) parse_def = parse_def.concat(defs.parse);
     });
 
-    console.log(enums_def.join('\n'));
+    typesStream.write(enums_def.join('\n'));
     dependencies_def.forEach(deps => {
-	    console.log(deps.enums.join('\n'));
-	    console.log(deps.structs.join('\n'));
+	    typesStream.write(deps.enums.join('\n'));
+	    typesStream.write(deps.structs.join('\n'));
 	    if (deps.free) free_def = deps.free.concat(free_def);
 		if (deps.enum_selector) enum_selector_def = enum_selector_def.concat(deps.enum_selector);
 	    if (deps.parse) parse_def = deps.parse.concat(parse_def);
     });
-    console.log(structs_def.join('\n'));
-    console.log(free_def.join('\n'));
-	console.log(enum_selector_def.join('\n'));
-	console.log(parse_def.join('\n'));
+    typesStream.write(structs_def.join('\n'));
+    inlStream.write(free_def.join('\n'));
+	inlStream.write(enum_selector_def.join('\n'));
+	inlStream.write(parse_def.join('\n'));
 
-	console.log(fs.readFileSync(path.join(__dirname, 'vrm_types_footer.txt'), 'utf8'));
+	typesStream.write(fs.readFileSync(path.join(__dirname, 'vrm_types_footer.txt'), 'utf8'));
+
+	typesStream.close();
+	inlStream.close();
 });
 
 /* vrm_type_generator is distributed under MIT license:
