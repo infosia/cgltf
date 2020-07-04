@@ -49,6 +49,7 @@ function parse(json, file, rootType, subType) {
 
 	free_def.push('static void ' + typename + '_free(const struct cgltf_memory_options* memory, ' + typename + '* data) {');
 	parse_def.push('static int cgltf_parse_json_' + typename.replace('cgltf_', '') + '(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, ' + typename +'* out_data) {');
+	parse_def.push(indent + '(void)out_data; (void)json_chunk; (void)options;');
 	parse_def.push(indent + 'if (tokens[i].type == JSMN_OBJECT) {');
 	parse_def.push(indent + indent + 'int size = tokens[i].size; ++i;');
 	parse_def.push(indent + indent + 'for (int j = 0; j < size; ++j) {');
@@ -154,8 +155,11 @@ function parse(json, file, rootType, subType) {
 				throw new Error('Unknown type: ' + type + ' for ' + name + ' in ' + file);
 			}
 		} else if (ref) {
-			structs_def.push(indent + prefix + sanitize(ref) + ' ' + name + ';');
-			free_def.push(indent + prefix + sanitize(ref) + '_free(memory, &data->'  + name + ');');
+			const refname = sanitize(ref);
+			structs_def.push(indent + prefix + refname + ' ' + name + ';');
+			free_def.push(indent + prefix + refname + '_free(memory, &data->'  + name + ');');
+			parse_def.push(indent + indent + indent + '} else if (cgltf_json_strcmp(tokens + i, json_chunk, "' + name + '") == 0) {');
+			parse_def.push(indent + indent + indent + indent + 'i = cgltf_parse_json_' + refname + '(options, tokens, i + 1, json_chunk, &out_data->' + name + ');');
 		} else {
 			throw new Error('Unknown type: ' + type + ' for ' + name + ' in ' + file);
 		}
@@ -171,6 +175,7 @@ function parse(json, file, rootType, subType) {
 	}
 
 	free_def.push('}');
+	free_def.push('');
 
 	parse_def.push(indent + indent + indent + '} else {');
 	parse_def.push(indent + indent + indent + indent + 'i = cgltf_skip_json(tokens, i + 1);');

@@ -5041,26 +5041,7 @@ static int cgltf_parse_json_root(cgltf_options* options, jsmntok_t const* tokens
 				}
 				else if (cgltf_json_strcmp(tokens + i, json_chunk, "VRM") == 0)
 				{
-					// TODO 
-
-					++i;
-
-					CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_OBJECT);
-
-					int data_size = tokens[i].size;
-					++i;
-
-					for (int m = 0; m < data_size; ++m)
-					{
-						CGLTF_CHECK_KEY(tokens[i]);
-
-						i = cgltf_skip_json(tokens, i + 1);
-
-						if (i < 0)
-						{
-							return i;
-						}
-					}
+					i = cgltf_parse_json_vrm(options, tokens, i + 1, json_chunk, &out_data->vrm);
 				}
 				else
 				{
