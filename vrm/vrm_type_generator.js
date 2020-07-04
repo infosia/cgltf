@@ -118,11 +118,13 @@ function parse(json, file, rootType, subType) {
 			}
 		} else if (type == 'object') {
 			parse_def.push(indent3 + '} else if (cgltf_json_strcmp(tokens + i, json_chunk, "' + name + '") == 0) {');
-			parse_def.push(indent4 + 'i = cgltf_skip_json(tokens, i + 1);// TODO');
 
 			if (vec3(json.properties[name])) {
 				structs_def.push(indent1 + 'cgltf_float* ' + name + '; // [x, y, z]');
 				free_def.push(indent1 + 'memory->free(memory->user_data, data->' + name + ');');
+
+				parse_def.push(indent4 + 'i = cgltf_parse_json_vec3(options, tokens, i + 1, json_chunk, out_data->' + name + ');');
+
 			} else if (name == 'floatProperties' || name == 'textureProperties' || name == 'keywordMap') {
 				const property_type = selectType(name);
 				structs_def.push(indent1 + 'char** ' + name + '_keys;');
@@ -136,6 +138,7 @@ function parse(json, file, rootType, subType) {
 				free_def.push(indent1 + 'memory->free(memory->user_data, data->' + name + '_keys);');
 				free_def.push(indent1 + 'memory->free(memory->user_data, data->' + name + '_values);');
 
+				parse_def.push(indent5 + 'i = cgltf_skip_json(tokens, i + 1);// TODO');
 			} else if (name == 'vectorProperties' || name == 'tagMap') {
 				const property_type = selectType(name);
 				structs_def.push(indent1 + 'char** ' + name + '_keys;');
@@ -150,6 +153,7 @@ function parse(json, file, rootType, subType) {
 				free_def.push(indent1 + 'memory->free(memory->user_data, data->' + name + '_keys);');
 				free_def.push(indent1 + 'memory->free(memory->user_data, data->' + name + '_values);');
 
+				parse_def.push(indent5 + 'i = cgltf_skip_json(tokens, i + 1);// TODO');
 			} else {
 				throw new Error('Unknown type: ' + json.type + ' for ' + name + ' in ' + file);
 			}
@@ -191,7 +195,11 @@ function parse(json, file, rootType, subType) {
 					free_def.push(indent1 + 'for (cgltf_size i = 0; i < data->' + name + '_count; i++) {');
 					free_def.push(indent2 + member_type + '_free(memory, &data->'  + name + '[i]);');
 					free_def.push(indent1 + '}');
-					parse_def.push(indent4 + 'i = cgltf_skip_json(tokens, i + 1); // TODO');
+					parse_def.push(indent4 + 'i = cgltf_parse_json_array(options, tokens, i + 1, json_chunk, sizeof(' + member_type + '), (void**)&out_data->' + name + ', &out_data->' + name + '_count);');
+					parse_def.push(indent4 + 'if (i < 0) return i;');
+					parse_def.push(indent4 + 'for (cgltf_int k = 0; k < out_data->' + name + '_count; k++) {');
+					parse_def.push(indent5 + 'i = cgltf_parse_json_' + member_type.replace('cgltf_', '') + '(options, tokens, i, json_chunk, out_data->' + name + ' + k);');
+					parse_def.push(indent4 + '}');
 				} else {
 					throw new Error('Unknown type: ' + items.type + ' for ' + name + '.items in ' + file);
 				}

@@ -2264,6 +2264,47 @@ static int cgltf_parse_json_int_array(jsmntok_t const* tokens, int i, const uint
 	return i;
 }
 
+static int cgltf_parse_json_vec3(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, float* out_array)
+{
+	if (tokens[i].type == JSMN_OBJECT) {
+		int size = tokens[i].size; ++i;
+		if (size >= 3) {
+			if (out_array != NULL) {
+				options->memory.free(options->memory.user_data, out_array);
+			}
+			void* result = cgltf_calloc(options, sizeof(cgltf_float), 3);
+			if (!result)
+			{
+				return CGLTF_ERROR_NOMEM;
+			}
+			out_array = result;
+		}
+
+		for (int j = 0; j < size; ++j) {
+			if (tokens[i].type != JSMN_STRING || tokens[i].size == 0) {
+				continue;
+			}
+			else if (cgltf_json_strcmp(tokens + i, json_chunk, "x") == 0) {
+				++i; *out_array = cgltf_json_to_float(tokens + i, json_chunk); ++i;
+			}
+			else if (cgltf_json_strcmp(tokens + i, json_chunk, "y") == 0) {
+				++i; *(out_array+1) = cgltf_json_to_float(tokens + i, json_chunk); ++i;
+			}
+			else if (cgltf_json_strcmp(tokens + i, json_chunk, "z") == 0) {
+				++i; *(out_array+2) = cgltf_json_to_float(tokens + i, json_chunk); ++i;
+			}
+			else {
+				i = cgltf_skip_json(tokens, i + 1);
+			}
+			if (i < 0) return i;
+		}
+	}
+	else {
+		i = cgltf_skip_json(tokens, i + 1);
+	}
+	return i;
+}
+
 static int cgltf_parse_json_string(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, char** out_string)
 {
 	CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_STRING);

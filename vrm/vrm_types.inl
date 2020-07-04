@@ -487,7 +487,7 @@ static int cgltf_parse_json_vrm_secondaryanimation_collidergroup_colliders(cgltf
 			if (tokens[i].type != JSMN_STRING || tokens[i].size == 0) {
 				continue;
 			} else if (cgltf_json_strcmp(tokens + i, json_chunk, "offset") == 0) {
-				i = cgltf_skip_json(tokens, i + 1);// TODO
+				i = cgltf_parse_json_vec3(options, tokens, i + 1, json_chunk, out_data->offset);
 			} else if (cgltf_json_strcmp(tokens + i, json_chunk, "radius") == 0) {
 				++i; out_data->radius = cgltf_json_to_float(tokens + i, json_chunk); ++i;
 			} else {
@@ -514,7 +514,7 @@ static int cgltf_parse_json_vrm_secondaryanimation_spring(cgltf_options* options
 			} else if (cgltf_json_strcmp(tokens + i, json_chunk, "gravityPower") == 0) {
 				++i; out_data->gravityPower = cgltf_json_to_float(tokens + i, json_chunk); ++i;
 			} else if (cgltf_json_strcmp(tokens + i, json_chunk, "gravityDir") == 0) {
-				i = cgltf_skip_json(tokens, i + 1);// TODO
+				i = cgltf_parse_json_vec3(options, tokens, i + 1, json_chunk, out_data->gravityDir);
 			} else if (cgltf_json_strcmp(tokens + i, json_chunk, "dragForce") == 0) {
 				++i; out_data->dragForce = cgltf_json_to_float(tokens + i, json_chunk); ++i;
 			} else if (cgltf_json_strcmp(tokens + i, json_chunk, "center") == 0) {
@@ -549,7 +549,11 @@ static int cgltf_parse_json_vrm_secondaryanimation_collidergroup(cgltf_options* 
 			} else if (cgltf_json_strcmp(tokens + i, json_chunk, "node") == 0) {
 				++i; out_data->node = cgltf_json_to_int(tokens + i, json_chunk); ++i;
 			} else if (cgltf_json_strcmp(tokens + i, json_chunk, "colliders") == 0) {
-				i = cgltf_skip_json(tokens, i + 1); // TODO
+				i = cgltf_parse_json_array(options, tokens, i + 1, json_chunk, sizeof(cgltf_vrm_secondaryanimation_collidergroup_colliders), (void**)&out_data->colliders, &out_data->colliders_count);
+				if (i < 0) return i;
+				for (cgltf_int k = 0; k < out_data->colliders_count; k++) {
+					i = cgltf_parse_json_vrm_secondaryanimation_collidergroup_colliders(options, tokens, i, json_chunk, out_data->colliders + k);
+				}
 			} else {
 				i = cgltf_skip_json(tokens, i + 1);
 			}
@@ -752,7 +756,7 @@ static int cgltf_parse_json_vrm_firstperson(cgltf_options* options, jsmntok_t co
 			} else if (cgltf_json_strcmp(tokens + i, json_chunk, "firstPersonBone") == 0) {
 				++i; out_data->firstPersonBone = cgltf_json_to_int(tokens + i, json_chunk); ++i;
 			} else if (cgltf_json_strcmp(tokens + i, json_chunk, "firstPersonBoneOffset") == 0) {
-				i = cgltf_skip_json(tokens, i + 1);// TODO
+				i = cgltf_parse_json_vec3(options, tokens, i + 1, json_chunk, out_data->firstPersonBoneOffset);
 			} else if (cgltf_json_strcmp(tokens + i, json_chunk, "meshAnnotations") == 0) {
 				i = cgltf_parse_json_array(options, tokens, i + 1, json_chunk, sizeof(cgltf_vrm_firstperson_meshannotation), (void**)&out_data->meshAnnotations, &out_data->meshAnnotations_count);
 				if (i < 0) return i;
@@ -795,11 +799,11 @@ static int cgltf_parse_json_vrm_humanoid_bone(cgltf_options* options, jsmntok_t 
 			} else if (cgltf_json_strcmp(tokens + i, json_chunk, "useDefaultValues") == 0) {
 				++i; out_data->useDefaultValues = cgltf_json_to_bool(tokens + i, json_chunk); ++i;
 			} else if (cgltf_json_strcmp(tokens + i, json_chunk, "min") == 0) {
-				i = cgltf_skip_json(tokens, i + 1);// TODO
+				i = cgltf_parse_json_vec3(options, tokens, i + 1, json_chunk, out_data->min);
 			} else if (cgltf_json_strcmp(tokens + i, json_chunk, "max") == 0) {
-				i = cgltf_skip_json(tokens, i + 1);// TODO
+				i = cgltf_parse_json_vec3(options, tokens, i + 1, json_chunk, out_data->max);
 			} else if (cgltf_json_strcmp(tokens + i, json_chunk, "center") == 0) {
-				i = cgltf_skip_json(tokens, i + 1);// TODO
+				i = cgltf_parse_json_vec3(options, tokens, i + 1, json_chunk, out_data->center);
 			} else if (cgltf_json_strcmp(tokens + i, json_chunk, "axisLength") == 0) {
 				++i; out_data->axisLength = cgltf_json_to_float(tokens + i, json_chunk); ++i;
 			} else {
@@ -865,15 +869,15 @@ static int cgltf_parse_json_vrm_material(cgltf_options* options, jsmntok_t const
 			} else if (cgltf_json_strcmp(tokens + i, json_chunk, "renderQueue") == 0) {
 				++i; out_data->renderQueue = cgltf_json_to_int(tokens + i, json_chunk); ++i;
 			} else if (cgltf_json_strcmp(tokens + i, json_chunk, "floatProperties") == 0) {
-				i = cgltf_skip_json(tokens, i + 1);// TODO
+					i = cgltf_skip_json(tokens, i + 1);// TODO
 			} else if (cgltf_json_strcmp(tokens + i, json_chunk, "vectorProperties") == 0) {
-				i = cgltf_skip_json(tokens, i + 1);// TODO
+					i = cgltf_skip_json(tokens, i + 1);// TODO
 			} else if (cgltf_json_strcmp(tokens + i, json_chunk, "textureProperties") == 0) {
-				i = cgltf_skip_json(tokens, i + 1);// TODO
+					i = cgltf_skip_json(tokens, i + 1);// TODO
 			} else if (cgltf_json_strcmp(tokens + i, json_chunk, "keywordMap") == 0) {
-				i = cgltf_skip_json(tokens, i + 1);// TODO
+					i = cgltf_skip_json(tokens, i + 1);// TODO
 			} else if (cgltf_json_strcmp(tokens + i, json_chunk, "tagMap") == 0) {
-				i = cgltf_skip_json(tokens, i + 1);// TODO
+					i = cgltf_skip_json(tokens, i + 1);// TODO
 			} else {
 				i = cgltf_skip_json(tokens, i + 1);
 			}
