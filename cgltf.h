@@ -2275,7 +2275,7 @@ static int cgltf_parse_json_vec3(cgltf_options* options, jsmntok_t const* tokens
 			if (*out_array) {
 				return CGLTF_ERROR_JSON;
 			}
-			*out_array = cgltf_calloc(options, sizeof(cgltf_float), 3);
+			*out_array = (float*)cgltf_calloc(options, sizeof(cgltf_float), 3);
 			if (!*out_array)
 			{
 				return CGLTF_ERROR_NOMEM;
@@ -2380,8 +2380,8 @@ static int cgltf_parse_json_float_properties(cgltf_options* options, jsmntok_t c
 			return cgltf_skip_json(tokens, i);
 		}
 		++i;
-		*out_keys = cgltf_calloc(options, sizeof(char*), size);
-		*out_values = cgltf_calloc(options, sizeof(cgltf_float), size);
+		*out_keys = (char**)cgltf_calloc(options, sizeof(char*), size);
+		*out_values = (cgltf_float*)cgltf_calloc(options, sizeof(cgltf_float), size);
 		*out_size = size;
 		if (!*out_keys || !*out_values)
 		{
@@ -2423,8 +2423,8 @@ static int cgltf_parse_json_int_properties(cgltf_options* options, jsmntok_t con
 			return cgltf_skip_json(tokens, i);
 		}
 		++i;
-		*out_keys = cgltf_calloc(options, sizeof(char*), size);
-		*out_values = cgltf_calloc(options, sizeof(cgltf_int), size);
+		*out_keys = (char**)cgltf_calloc(options, sizeof(char*), size);
+		*out_values = (cgltf_int*)cgltf_calloc(options, sizeof(cgltf_int), size);
 		*out_size = size;
 		if (!*out_keys || !*out_values)
 		{
@@ -2466,8 +2466,8 @@ static int cgltf_parse_json_bool_properties(cgltf_options* options, jsmntok_t co
 			return cgltf_skip_json(tokens, i);
 		}
 		++i;
-		*out_keys = cgltf_calloc(options, sizeof(char*), size);
-		*out_values = cgltf_calloc(options, sizeof(cgltf_bool), size);
+		*out_keys = (char**)cgltf_calloc(options, sizeof(char*), size);
+		*out_values = (cgltf_bool*)cgltf_calloc(options, sizeof(cgltf_bool), size);
 		*out_size = size;
 		if (!*out_keys || !*out_values)
 		{
@@ -2509,9 +2509,9 @@ static int cgltf_parse_json_floats_properties(cgltf_options* options, jsmntok_t 
 			return cgltf_skip_json(tokens, i);
 		}
 		++i;
-		*out_keys = cgltf_calloc(options, sizeof(char*), size);
-		*out_values = cgltf_calloc(options, sizeof(cgltf_float*), size);
-		*out_floats_size = cgltf_calloc(options, sizeof(cgltf_size*), size);
+		*out_keys = (char**)cgltf_calloc(options, sizeof(char*), size);
+		*out_values = (cgltf_float**)cgltf_calloc(options, sizeof(cgltf_float*), size);
+		*out_floats_size = (cgltf_size*)cgltf_calloc(options, sizeof(cgltf_size*), size);
 		*out_size = size;
 		if (!*out_keys || !*out_values || !*out_floats_size)
 		{
@@ -2528,7 +2528,7 @@ static int cgltf_parse_json_floats_properties(cgltf_options* options, jsmntok_t 
 				if (i < 0) {
 					return i;
 				}
-				i = cgltf_parse_json_array(options, tokens, i, json_chunk, sizeof(cgltf_float), *out_values + j, *out_floats_size + j);
+				i = cgltf_parse_json_array(options, tokens, i, json_chunk, sizeof(cgltf_float), (void**)*out_values + j, *out_floats_size + j);
 				if (i < 0)
 				{
 					return i;
@@ -2561,8 +2561,8 @@ static int cgltf_parse_json_chars_properties(cgltf_options* options, jsmntok_t c
 			return cgltf_skip_json(tokens, i);
 		}
 		++i;
-		*out_keys = cgltf_calloc(options, sizeof(char*), size);
-		*out_values = cgltf_calloc(options, sizeof(char*), size);
+		*out_keys = (char**)cgltf_calloc(options, sizeof(char*), size);
+		*out_values = (char**)cgltf_calloc(options, sizeof(char*), size);
 		*out_size = size;
 		if (!*out_keys || !*out_values)
 		{
