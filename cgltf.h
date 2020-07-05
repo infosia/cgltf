@@ -2264,7 +2264,7 @@ static int cgltf_parse_json_int_array(jsmntok_t const* tokens, int i, const uint
 	return i;
 }
 
-static int cgltf_parse_json_vec3(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, float* out_array)
+static int cgltf_parse_json_vec3(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, float** out_array)
 {
 	if (tokens[i].type == JSMN_OBJECT) {
 		int size = tokens[i].size; ++i;
@@ -2272,11 +2272,11 @@ static int cgltf_parse_json_vec3(cgltf_options* options, jsmntok_t const* tokens
 			return CGLTF_ERROR_JSON;
 		}
 		else {
-			if (out_array) {
+			if (*out_array) {
 				return CGLTF_ERROR_JSON;
 			}
-			out_array = cgltf_calloc(options, sizeof(cgltf_float), 3);
-			if (!out_array)
+			*out_array = cgltf_calloc(options, sizeof(cgltf_float), 3);
+			if (!*out_array)
 			{
 				return CGLTF_ERROR_NOMEM;
 			}
@@ -2287,13 +2287,13 @@ static int cgltf_parse_json_vec3(cgltf_options* options, jsmntok_t const* tokens
 				continue;
 			}
 			else if (cgltf_json_strcmp(tokens + i, json_chunk, "x") == 0) {
-				++i; *out_array = cgltf_json_to_float(tokens + i, json_chunk); ++i;
+				++i; (*out_array)[0] = cgltf_json_to_float(tokens + i, json_chunk); ++i;
 			}
 			else if (cgltf_json_strcmp(tokens + i, json_chunk, "y") == 0) {
-				++i; *(out_array+1) = cgltf_json_to_float(tokens + i, json_chunk); ++i;
+				++i; (*out_array)[0] = cgltf_json_to_float(tokens + i, json_chunk); ++i;
 			}
 			else if (cgltf_json_strcmp(tokens + i, json_chunk, "z") == 0) {
-				++i; *(out_array+2) = cgltf_json_to_float(tokens + i, json_chunk); ++i;
+				++i; (*out_array)[1] = cgltf_json_to_float(tokens + i, json_chunk); ++i;
 			}
 			else {
 				i = cgltf_skip_json(tokens, i + 1);
@@ -2418,7 +2418,7 @@ static int cgltf_parse_json_bool_properties(cgltf_options* options, jsmntok_t co
 		*out_keys = cgltf_calloc(options, sizeof(char*), size);
 		*out_values = cgltf_calloc(options, sizeof(cgltf_bool), size);
 		*out_size = size;
-		if (!out_keys || !out_values)
+		if (!*out_keys || !*out_values)
 		{
 			return CGLTF_ERROR_NOMEM;
 		}

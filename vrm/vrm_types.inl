@@ -487,7 +487,7 @@ static int cgltf_parse_json_vrm_secondaryanimation_collidergroup_colliders(cgltf
 			if (tokens[i].type != JSMN_STRING || tokens[i].size == 0) {
 				continue;
 			} else if (cgltf_json_strcmp(tokens + i, json_chunk, "offset") == 0) {
-				i = cgltf_parse_json_vec3(options, tokens, i + 1, json_chunk, out_data->offset);
+				i = cgltf_parse_json_vec3(options, tokens, i + 1, json_chunk, &out_data->offset);
 			} else if (cgltf_json_strcmp(tokens + i, json_chunk, "radius") == 0) {
 				++i; out_data->radius = cgltf_json_to_float(tokens + i, json_chunk); ++i;
 			} else {
@@ -514,7 +514,7 @@ static int cgltf_parse_json_vrm_secondaryanimation_spring(cgltf_options* options
 			} else if (cgltf_json_strcmp(tokens + i, json_chunk, "gravityPower") == 0) {
 				++i; out_data->gravityPower = cgltf_json_to_float(tokens + i, json_chunk); ++i;
 			} else if (cgltf_json_strcmp(tokens + i, json_chunk, "gravityDir") == 0) {
-				i = cgltf_parse_json_vec3(options, tokens, i + 1, json_chunk, out_data->gravityDir);
+				i = cgltf_parse_json_vec3(options, tokens, i + 1, json_chunk, &out_data->gravityDir);
 			} else if (cgltf_json_strcmp(tokens + i, json_chunk, "dragForce") == 0) {
 				++i; out_data->dragForce = cgltf_json_to_float(tokens + i, json_chunk); ++i;
 			} else if (cgltf_json_strcmp(tokens + i, json_chunk, "center") == 0) {
@@ -756,7 +756,7 @@ static int cgltf_parse_json_vrm_firstperson(cgltf_options* options, jsmntok_t co
 			} else if (cgltf_json_strcmp(tokens + i, json_chunk, "firstPersonBone") == 0) {
 				++i; out_data->firstPersonBone = cgltf_json_to_int(tokens + i, json_chunk); ++i;
 			} else if (cgltf_json_strcmp(tokens + i, json_chunk, "firstPersonBoneOffset") == 0) {
-				i = cgltf_parse_json_vec3(options, tokens, i + 1, json_chunk, out_data->firstPersonBoneOffset);
+				i = cgltf_parse_json_vec3(options, tokens, i + 1, json_chunk, &out_data->firstPersonBoneOffset);
 			} else if (cgltf_json_strcmp(tokens + i, json_chunk, "meshAnnotations") == 0) {
 				i = cgltf_parse_json_array(options, tokens, i + 1, json_chunk, sizeof(cgltf_vrm_firstperson_meshannotation), (void**)&out_data->meshAnnotations, &out_data->meshAnnotations_count);
 				if (i < 0) return i;
@@ -799,11 +799,11 @@ static int cgltf_parse_json_vrm_humanoid_bone(cgltf_options* options, jsmntok_t 
 			} else if (cgltf_json_strcmp(tokens + i, json_chunk, "useDefaultValues") == 0) {
 				++i; out_data->useDefaultValues = cgltf_json_to_bool(tokens + i, json_chunk); ++i;
 			} else if (cgltf_json_strcmp(tokens + i, json_chunk, "min") == 0) {
-				i = cgltf_parse_json_vec3(options, tokens, i + 1, json_chunk, out_data->min);
+				i = cgltf_parse_json_vec3(options, tokens, i + 1, json_chunk, &out_data->min);
 			} else if (cgltf_json_strcmp(tokens + i, json_chunk, "max") == 0) {
-				i = cgltf_parse_json_vec3(options, tokens, i + 1, json_chunk, out_data->max);
+				i = cgltf_parse_json_vec3(options, tokens, i + 1, json_chunk, &out_data->max);
 			} else if (cgltf_json_strcmp(tokens + i, json_chunk, "center") == 0) {
-				i = cgltf_parse_json_vec3(options, tokens, i + 1, json_chunk, out_data->center);
+				i = cgltf_parse_json_vec3(options, tokens, i + 1, json_chunk, &out_data->center);
 			} else if (cgltf_json_strcmp(tokens + i, json_chunk, "axisLength") == 0) {
 				++i; out_data->axisLength = cgltf_json_to_float(tokens + i, json_chunk); ++i;
 			} else {
