@@ -253,21 +253,21 @@ function parse(json, file, rootType, subType) {
 }
 
 fs.readdir(basepath, (err, files) => {
-    if (err) throw err;
+	if (err) throw err;
 
-    let typesStream = fs.createWriteStream(path.join(__dirname, 'vrm_types.h'), 'utf8');
-    let inlStream   = fs.createWriteStream(path.join(__dirname, 'vrm_types.inl'), 'utf8');
+	let typesStream = fs.createWriteStream(path.join(__dirname, 'vrm_types.h'), 'utf8');
+	let inlStream   = fs.createWriteStream(path.join(__dirname, 'vrm_types.inl'), 'utf8');
 
 	typesStream.write(fs.readFileSync(path.join(__dirname, 'vrm_types_header.txt'), 'utf8'));
 
-   	let structs_def = [];
+	let structs_def = [];
 	let enums_def   = [];
 	let dependencies_def = [];
 	let free_def = [];
 	let enum_selector_def = [];
 	let parse_def = [];
 
-    files.filter(file => /.*\.json$/.test(file)).forEach(file => {
+	files.filter(file => /.*\.json$/.test(file)).forEach(file => {
 		const json = JSON.parse(fs.readFileSync(path.join(basepath, file), 'utf8'));
 		const defs = parse(json, file);
 
@@ -277,18 +277,18 @@ fs.readdir(basepath, (err, files) => {
 		if (defs.free) free_def = free_def.concat(defs.free);
 		if (defs.enum_selector) enum_selector_def = enum_selector_def.concat(defs.enum_selector);
 		if (defs.parse) parse_def = parse_def.concat(defs.parse);
-    });
+	});
 
-    typesStream.write(enums_def.join('\n'));
-    dependencies_def.forEach(deps => {
-	    typesStream.write(deps.enums.join('\n'));
-	    typesStream.write(deps.structs.join('\n'));
-	    if (deps.free) free_def = deps.free.concat(free_def);
+	typesStream.write(enums_def.join('\n'));
+	dependencies_def.forEach(deps => {
+		typesStream.write(deps.enums.join('\n'));
+		typesStream.write(deps.structs.join('\n'));
+		if (deps.free) free_def = deps.free.concat(free_def);
 		if (deps.enum_selector) enum_selector_def = enum_selector_def.concat(deps.enum_selector);
-	    if (deps.parse) parse_def = deps.parse.concat(parse_def);
-    });
-    typesStream.write(structs_def.join('\n'));
-    inlStream.write(free_def.join('\n'));
+		if (deps.parse) parse_def = deps.parse.concat(parse_def);
+	});
+	typesStream.write(structs_def.join('\n'));
+	inlStream.write(free_def.join('\n'));
 	inlStream.write(enum_selector_def.join('\n'));
 	inlStream.write(parse_def.join('\n'));
 
