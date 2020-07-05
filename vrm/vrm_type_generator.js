@@ -61,7 +61,7 @@ function parse(json, file, rootType, subType) {
 
 	free_def.push('static void ' + typename + '_free(const struct cgltf_memory_options* memory, ' + typename + '* data) {');
 	parse_def.push('static int cgltf_parse_json_' + typename.replace('cgltf_', '') + '(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, ' + typename +'* out_data) {');
-	parse_def.push(indent1 + '(void)out_data; (void)json_chunk; (void)options;');
+	parse_def.push(indent1 + '(void)options;');
 	parse_def.push(indent1 + 'if (tokens[i].type == JSMN_OBJECT) {');
 	parse_def.push(indent2 + 'int size = tokens[i].size; ++i;');
 	parse_def.push(indent2 + 'for (int j = 0; j < size; ++j) {');
@@ -151,7 +151,7 @@ function parse(json, file, rootType, subType) {
 				free_def.push(indent1 + 'memory->free(memory->user_data, data->' + name + '_keys);');
 				free_def.push(indent1 + 'memory->free(memory->user_data, data->' + name + '_values);');
 
-				parse_def.push(indent5 + 'i = cgltf_skip_json(tokens, i + 1);// TODO');
+				parse_def.push(indent5 + 'i = cgltf_parse_json_' + (name == 'tagMap' ? 'chars' : 'floats') + '_properties(options, tokens, i + 1, json_chunk, &out_data->' + name + '_keys, &out_data->' + name + '_values, &out_data->' + name + '_count);');
 			} else {
 				throw new Error('Unknown type: ' + json.type + ' for ' + name + ' in ' + file);
 			}

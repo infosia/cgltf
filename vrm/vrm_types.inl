@@ -480,7 +480,7 @@ static cgltf_bool select_cgltf_vrm_meta_licenseName(const char* name, cgltf_vrm_
 	return 0;
 }
 static int cgltf_parse_json_vrm_secondaryanimation_collidergroup_colliders(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, cgltf_vrm_secondaryanimation_collidergroup_colliders* out_data) {
-	(void)out_data; (void)json_chunk; (void)options;
+	(void)options;
 	if (tokens[i].type == JSMN_OBJECT) {
 		int size = tokens[i].size; ++i;
 		for (int j = 0; j < size; ++j) {
@@ -501,7 +501,7 @@ static int cgltf_parse_json_vrm_secondaryanimation_collidergroup_colliders(cgltf
 	return i;
 }
 static int cgltf_parse_json_vrm_secondaryanimation_spring(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, cgltf_vrm_secondaryanimation_spring* out_data) {
-	(void)out_data; (void)json_chunk; (void)options;
+	(void)options;
 	if (tokens[i].type == JSMN_OBJECT) {
 		int size = tokens[i].size; ++i;
 		for (int j = 0; j < size; ++j) {
@@ -540,7 +540,7 @@ static int cgltf_parse_json_vrm_secondaryanimation_spring(cgltf_options* options
 	return i;
 }
 static int cgltf_parse_json_vrm_secondaryanimation_collidergroup(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, cgltf_vrm_secondaryanimation_collidergroup* out_data) {
-	(void)out_data; (void)json_chunk; (void)options;
+	(void)options;
 	if (tokens[i].type == JSMN_OBJECT) {
 		int size = tokens[i].size; ++i;
 		for (int j = 0; j < size; ++j) {
@@ -565,7 +565,7 @@ static int cgltf_parse_json_vrm_secondaryanimation_collidergroup(cgltf_options* 
 	return i;
 }
 static int cgltf_parse_json_vrm_secondaryanimation(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, cgltf_vrm_secondaryanimation* out_data) {
-	(void)out_data; (void)json_chunk; (void)options;
+	(void)options;
 	if (tokens[i].type == JSMN_OBJECT) {
 		int size = tokens[i].size; ++i;
 		for (int j = 0; j < size; ++j) {
@@ -594,7 +594,7 @@ static int cgltf_parse_json_vrm_secondaryanimation(cgltf_options* options, jsmnt
 	return i;
 }
 static int cgltf_parse_json_vrm_blendshape_bind(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, cgltf_vrm_blendshape_bind* out_data) {
-	(void)out_data; (void)json_chunk; (void)options;
+	(void)options;
 	if (tokens[i].type == JSMN_OBJECT) {
 		int size = tokens[i].size; ++i;
 		for (int j = 0; j < size; ++j) {
@@ -617,7 +617,7 @@ static int cgltf_parse_json_vrm_blendshape_bind(cgltf_options* options, jsmntok_
 	return i;
 }
 static int cgltf_parse_json_vrm_blendshape_materialbind(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, cgltf_vrm_blendshape_materialbind* out_data) {
-	(void)out_data; (void)json_chunk; (void)options;
+	(void)options;
 	if (tokens[i].type == JSMN_OBJECT) {
 		int size = tokens[i].size; ++i;
 		for (int j = 0; j < size; ++j) {
@@ -642,7 +642,7 @@ static int cgltf_parse_json_vrm_blendshape_materialbind(cgltf_options* options, 
 	return i;
 }
 static int cgltf_parse_json_vrm_blendshape_group(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, cgltf_vrm_blendshape_group* out_data) {
-	(void)out_data; (void)json_chunk; (void)options;
+	(void)options;
 	if (tokens[i].type == JSMN_OBJECT) {
 		int size = tokens[i].size; ++i;
 		for (int j = 0; j < size; ++j) {
@@ -678,7 +678,7 @@ static int cgltf_parse_json_vrm_blendshape_group(cgltf_options* options, jsmntok
 	return i;
 }
 static int cgltf_parse_json_vrm_blendshape(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, cgltf_vrm_blendshape* out_data) {
-	(void)out_data; (void)json_chunk; (void)options;
+	(void)options;
 	if (tokens[i].type == JSMN_OBJECT) {
 		int size = tokens[i].size; ++i;
 		for (int j = 0; j < size; ++j) {
@@ -701,7 +701,7 @@ static int cgltf_parse_json_vrm_blendshape(cgltf_options* options, jsmntok_t con
 	return i;
 }
 static int cgltf_parse_json_vrm_firstperson_degreemap(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, cgltf_vrm_firstperson_degreemap* out_data) {
-	(void)out_data; (void)json_chunk; (void)options;
+	(void)options;
 	if (tokens[i].type == JSMN_OBJECT) {
 		int size = tokens[i].size; ++i;
 		for (int j = 0; j < size; ++j) {
@@ -726,7 +726,7 @@ static int cgltf_parse_json_vrm_firstperson_degreemap(cgltf_options* options, js
 	return i;
 }
 static int cgltf_parse_json_vrm_firstperson_meshannotation(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, cgltf_vrm_firstperson_meshannotation* out_data) {
-	(void)out_data; (void)json_chunk; (void)options;
+	(void)options;
 	if (tokens[i].type == JSMN_OBJECT) {
 		int size = tokens[i].size; ++i;
 		for (int j = 0; j < size; ++j) {
@@ -747,7 +747,7 @@ static int cgltf_parse_json_vrm_firstperson_meshannotation(cgltf_options* option
 	return i;
 }
 static int cgltf_parse_json_vrm_firstperson(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, cgltf_vrm_firstperson* out_data) {
-	(void)out_data; (void)json_chunk; (void)options;
+	(void)options;
 	if (tokens[i].type == JSMN_OBJECT) {
 		int size = tokens[i].size; ++i;
 		for (int j = 0; j < size; ++j) {
@@ -785,7 +785,7 @@ static int cgltf_parse_json_vrm_firstperson(cgltf_options* options, jsmntok_t co
 	return i;
 }
 static int cgltf_parse_json_vrm_humanoid_bone(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, cgltf_vrm_humanoid_bone* out_data) {
-	(void)out_data; (void)json_chunk; (void)options;
+	(void)options;
 	if (tokens[i].type == JSMN_OBJECT) {
 		int size = tokens[i].size; ++i;
 		for (int j = 0; j < size; ++j) {
@@ -817,7 +817,7 @@ static int cgltf_parse_json_vrm_humanoid_bone(cgltf_options* options, jsmntok_t 
 	return i;
 }
 static int cgltf_parse_json_vrm_humanoid(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, cgltf_vrm_humanoid* out_data) {
-	(void)out_data; (void)json_chunk; (void)options;
+	(void)options;
 	if (tokens[i].type == JSMN_OBJECT) {
 		int size = tokens[i].size; ++i;
 		for (int j = 0; j < size; ++j) {
@@ -856,7 +856,7 @@ static int cgltf_parse_json_vrm_humanoid(cgltf_options* options, jsmntok_t const
 	return i;
 }
 static int cgltf_parse_json_vrm_material(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, cgltf_vrm_material* out_data) {
-	(void)out_data; (void)json_chunk; (void)options;
+	(void)options;
 	if (tokens[i].type == JSMN_OBJECT) {
 		int size = tokens[i].size; ++i;
 		for (int j = 0; j < size; ++j) {
@@ -871,13 +871,13 @@ static int cgltf_parse_json_vrm_material(cgltf_options* options, jsmntok_t const
 			} else if (cgltf_json_strcmp(tokens + i, json_chunk, "floatProperties") == 0) {
 					i = cgltf_parse_json_float_properties(options, tokens, i + 1, json_chunk, &out_data->floatProperties_keys, &out_data->floatProperties_values, &out_data->floatProperties_count);
 			} else if (cgltf_json_strcmp(tokens + i, json_chunk, "vectorProperties") == 0) {
-					i = cgltf_skip_json(tokens, i + 1);// TODO
+					i = cgltf_parse_json_floats_properties(options, tokens, i + 1, json_chunk, &out_data->vectorProperties_keys, &out_data->vectorProperties_values, &out_data->vectorProperties_count);
 			} else if (cgltf_json_strcmp(tokens + i, json_chunk, "textureProperties") == 0) {
 					i = cgltf_parse_json_int_properties(options, tokens, i + 1, json_chunk, &out_data->textureProperties_keys, &out_data->textureProperties_values, &out_data->textureProperties_count);
 			} else if (cgltf_json_strcmp(tokens + i, json_chunk, "keywordMap") == 0) {
 					i = cgltf_parse_json_bool_properties(options, tokens, i + 1, json_chunk, &out_data->keywordMap_keys, &out_data->keywordMap_values, &out_data->keywordMap_count);
 			} else if (cgltf_json_strcmp(tokens + i, json_chunk, "tagMap") == 0) {
-					i = cgltf_skip_json(tokens, i + 1);// TODO
+					i = cgltf_parse_json_chars_properties(options, tokens, i + 1, json_chunk, &out_data->tagMap_keys, &out_data->tagMap_values, &out_data->tagMap_count);
 			} else {
 				i = cgltf_skip_json(tokens, i + 1);
 			}
@@ -889,7 +889,7 @@ static int cgltf_parse_json_vrm_material(cgltf_options* options, jsmntok_t const
 	return i;
 }
 static int cgltf_parse_json_vrm_meta(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, cgltf_vrm_meta* out_data) {
-	(void)out_data; (void)json_chunk; (void)options;
+	(void)options;
 	if (tokens[i].type == JSMN_OBJECT) {
 		int size = tokens[i].size; ++i;
 		for (int j = 0; j < size; ++j) {
@@ -937,7 +937,7 @@ static int cgltf_parse_json_vrm_meta(cgltf_options* options, jsmntok_t const* to
 	return i;
 }
 static int cgltf_parse_json_vrm(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, cgltf_vrm* out_data) {
-	(void)out_data; (void)json_chunk; (void)options;
+	(void)options;
 	if (tokens[i].type == JSMN_OBJECT) {
 		int size = tokens[i].size; ++i;
 		for (int j = 0; j < size; ++j) {
