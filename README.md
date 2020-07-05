@@ -1,5 +1,5 @@
 # :diamond_shape_with_a_dot_inside: cgltf
-**Single-file/stb-style C glTF loader and writer**
+**Single-file/stb-style C glTF loader and writer (with VRM loader support)**
 
 [![Build Status](https://travis-ci.org/jkuhlmann/cgltf.svg?branch=master)](https://travis-ci.org/jkuhlmann/cgltf)
 
@@ -13,7 +13,7 @@ Loading from file:
 
 cgltf_options options = {0};
 cgltf_data* data = NULL;
-cgltf_result result = cgltf_parse_file(&options, "scene.gltf", &data);
+cgltf_result result = cgltf_parse_file(&options, "scene.vrm", &data);
 if (result == cgltf_result_success)
 {
 	/* TODO make awesome stuff */
@@ -44,7 +44,7 @@ For buffer data, you can alternatively call `cgltf_load_buffers`, which will use
 
 **For more in-depth documentation and a description of the public interface refer to the top of the `cgltf.h` file.**
 
-## Usage: Writing
+## Usage: Writing (VRM is not supported)
 When writing glTF data, you need a valid `cgltf_data` structure that represents a valid glTF document. You can construct such a structure yourself or load it using the loader functions described above. The writer functions do not deallocate any memory. So, you either have to do it manually or call `cgltf_free()` if you got the data by loading it from a glTF document.
 
 Writing to file:
@@ -107,6 +107,7 @@ cgltf also supports some glTF extensions:
 - KHR_materials_pbrSpecularGlossiness
 - KHR_materials_unlit
 - KHR_texture_transform
+- [VRM specification 0.0](https://github.com/vrm-c/vrm-specification/tree/master/specification/0.0):
 
 cgltf does **not** yet support unlisted extensions. However, unlisted extensions can be accessed via "extensions" member on objects.
 
