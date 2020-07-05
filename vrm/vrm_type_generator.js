@@ -122,9 +122,7 @@ function parse(json, file, rootType, subType) {
 			if (vec3(json.properties[name])) {
 				structs_def.push(indent1 + 'cgltf_float* ' + name + '; // [x, y, z]');
 				free_def.push(indent1 + 'memory->free(memory->user_data, data->' + name + ');');
-
 				parse_def.push(indent4 + 'i = cgltf_parse_json_vec3(options, tokens, i + 1, json_chunk, out_data->' + name + ');');
-
 			} else if (name == 'floatProperties' || name == 'textureProperties' || name == 'keywordMap') {
 				const property_type = selectType(name);
 				structs_def.push(indent1 + 'char** ' + name + '_keys;');
@@ -138,7 +136,7 @@ function parse(json, file, rootType, subType) {
 				free_def.push(indent1 + 'memory->free(memory->user_data, data->' + name + '_keys);');
 				free_def.push(indent1 + 'memory->free(memory->user_data, data->' + name + '_values);');
 
-				parse_def.push(indent5 + 'i = cgltf_skip_json(tokens, i + 1);// TODO');
+				parse_def.push(indent5 + 'i = cgltf_parse_json_' + property_type.replace('cgltf_', '') + '_properties(options, tokens, i + 1, json_chunk, &out_data->' + name + '_keys, &out_data->' + name + '_values, &out_data->' + name + '_count);');
 			} else if (name == 'vectorProperties' || name == 'tagMap') {
 				const property_type = selectType(name);
 				structs_def.push(indent1 + 'char** ' + name + '_keys;');

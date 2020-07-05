@@ -869,13 +869,13 @@ static int cgltf_parse_json_vrm_material(cgltf_options* options, jsmntok_t const
 			} else if (cgltf_json_strcmp(tokens + i, json_chunk, "renderQueue") == 0) {
 				++i; out_data->renderQueue = cgltf_json_to_int(tokens + i, json_chunk); ++i;
 			} else if (cgltf_json_strcmp(tokens + i, json_chunk, "floatProperties") == 0) {
-					i = cgltf_skip_json(tokens, i + 1);// TODO
+					i = cgltf_parse_json_float_properties(options, tokens, i + 1, json_chunk, &out_data->floatProperties_keys, &out_data->floatProperties_values, &out_data->floatProperties_count);
 			} else if (cgltf_json_strcmp(tokens + i, json_chunk, "vectorProperties") == 0) {
 					i = cgltf_skip_json(tokens, i + 1);// TODO
 			} else if (cgltf_json_strcmp(tokens + i, json_chunk, "textureProperties") == 0) {
-					i = cgltf_skip_json(tokens, i + 1);// TODO
+					i = cgltf_parse_json_int_properties(options, tokens, i + 1, json_chunk, &out_data->textureProperties_keys, &out_data->textureProperties_values, &out_data->textureProperties_count);
 			} else if (cgltf_json_strcmp(tokens + i, json_chunk, "keywordMap") == 0) {
-					i = cgltf_skip_json(tokens, i + 1);// TODO
+					i = cgltf_parse_json_bool_properties(options, tokens, i + 1, json_chunk, &out_data->keywordMap_keys, &out_data->keywordMap_values, &out_data->keywordMap_count);
 			} else if (cgltf_json_strcmp(tokens + i, json_chunk, "tagMap") == 0) {
 					i = cgltf_skip_json(tokens, i + 1);// TODO
 			} else {

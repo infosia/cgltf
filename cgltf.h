@@ -2268,16 +2268,18 @@ static int cgltf_parse_json_vec3(cgltf_options* options, jsmntok_t const* tokens
 {
 	if (tokens[i].type == JSMN_OBJECT) {
 		int size = tokens[i].size; ++i;
-		if (size >= 3) {
-			if (out_array != NULL) {
-				options->memory.free(options->memory.user_data, out_array);
+		if (size < 3) {
+			return CGLTF_ERROR_JSON;
+		}
+		else {
+			if (out_array) {
+				return CGLTF_ERROR_JSON;
 			}
-			void* result = cgltf_calloc(options, sizeof(cgltf_float), 3);
-			if (!result)
+			out_array = cgltf_calloc(options, sizeof(cgltf_float), 3);
+			if (!out_array)
 			{
 				return CGLTF_ERROR_NOMEM;
 			}
-			out_array = result;
 		}
 
 		for (int j = 0; j < size; ++j) {
@@ -2322,6 +2324,127 @@ static int cgltf_parse_json_string(cgltf_options* options, jsmntok_t const* toke
 	result[size] = 0;
 	*out_string = result;
 	return i + 1;
+}
+
+static int cgltf_parse_json_float_properties(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, char*** out_keys, cgltf_float** out_values, cgltf_size* out_size)
+{
+	if (tokens[i].type == JSMN_OBJECT) {
+		if (*out_keys || *out_values) {
+			return CGLTF_ERROR_JSON;
+		}
+		int size = tokens[i].size;
+		++i;
+		*out_keys = cgltf_calloc(options, sizeof(char*), size);
+		*out_values = cgltf_calloc(options, sizeof(cgltf_float), size);
+		*out_size = size;
+		if (!out_keys || !out_values)
+		{
+			return CGLTF_ERROR_NOMEM;
+		}
+		for (int j = 0; j < size; ++j) {
+			if (tokens[i].type != JSMN_STRING || tokens[i].size == 0)
+			{
+				return CGLTF_ERROR_JSON;
+			}
+			else
+			{
+				i = cgltf_parse_json_string(options, tokens, i, json_chunk, *out_keys + j);
+				if (i < 0) {
+					return i;
+				}
+				(*out_values)[j] = cgltf_json_to_float(tokens + i, json_chunk);
+				++i;
+			}
+			if (i < 0) {
+				return i;
+			}
+		}
+	}
+	else {
+		i = cgltf_skip_json(tokens, i + 1);
+	}
+	return i;
+}
+
+static int cgltf_parse_json_int_properties(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, char*** out_keys, cgltf_int** out_values, cgltf_size* out_size)
+{
+	if (tokens[i].type == JSMN_OBJECT) {
+		if (*out_keys || *out_values) {
+			return CGLTF_ERROR_JSON;
+		}
+		int size = tokens[i].size;
+		++i;
+		*out_keys = cgltf_calloc(options, sizeof(char*), size);
+		*out_values = cgltf_calloc(options, sizeof(cgltf_int), size);
+		*out_size = size;
+		if (!out_keys || !out_values)
+		{
+			return CGLTF_ERROR_NOMEM;
+		}
+		for (int j = 0; j < size; ++j) {
+			if (tokens[i].type != JSMN_STRING || tokens[i].size == 0)
+			{
+				return CGLTF_ERROR_JSON;
+			}
+			else
+			{
+				i = cgltf_parse_json_string(options, tokens, i, json_chunk, *out_keys + j);
+				if (i < 0) {
+					return i;
+				}
+				(*out_values)[j] = cgltf_json_to_int(tokens + i, json_chunk);
+				++i;
+			}
+			if (i < 0) {
+				return i;
+			}
+		}
+	}
+	else {
+		i = cgltf_skip_json(tokens, i + 1);
+	}
+	return i;
+}
+
+
+static int cgltf_parse_json_bool_properties(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, char*** out_keys, cgltf_bool** out_values, cgltf_size* out_size)
+{
+	if (tokens[i].type == JSMN_OBJECT) {
+		if (*out_keys || *out_values) {
+			return CGLTF_ERROR_JSON;
+		}
+		int size = tokens[i].size;
+		++i;
+		*out_keys = cgltf_calloc(options, sizeof(char*), size);
+		*out_values = cgltf_calloc(options, sizeof(cgltf_bool), size);
+		*out_size = size;
+		if (!out_keys || !out_values)
+		{
+			return CGLTF_ERROR_NOMEM;
+		}
+		for (int j = 0; j < size; ++j) {
+			if (tokens[i].type != JSMN_STRING || tokens[i].size == 0)
+			{
+				return CGLTF_ERROR_JSON;
+			}
+			else
+			{
+				i = cgltf_parse_json_string(options, tokens, i, json_chunk, *out_keys + j);
+				if (i < 0) {
+					return i;
+				}
+				(*out_values)[j] = cgltf_json_to_bool(tokens + i, json_chunk);
+				++i;
+			}
+			if (i < 0) {
+				return i;
+			}
+		}
+	}
+	else {
+		i = cgltf_skip_json(tokens, i + 1);
+	}
+	return i;
 }
 
 static int cgltf_parse_json_array(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, size_t element_size, void** out_array, cgltf_size* out_size)
