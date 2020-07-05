@@ -244,6 +244,7 @@ typedef struct cgltf_vrm_material {
 	char** vectorProperties_keys;
 	cgltf_float** vectorProperties_values;
 	cgltf_size vectorProperties_count;
+	cgltf_size* vectorProperties_floats_size;
 	char** textureProperties_keys;
 	cgltf_int* textureProperties_values;
 	cgltf_size textureProperties_count;

@@ -151,7 +151,14 @@ function parse(json, file, rootType, subType) {
 				free_def.push(indent1 + 'memory->free(memory->user_data, data->' + name + '_keys);');
 				free_def.push(indent1 + 'memory->free(memory->user_data, data->' + name + '_values);');
 
-				parse_def.push(indent5 + 'i = cgltf_parse_json_' + (name == 'tagMap' ? 'chars' : 'floats') + '_properties(options, tokens, i + 1, json_chunk, &out_data->' + name + '_keys, &out_data->' + name + '_values, &out_data->' + name + '_count);');
+				if (name == 'vectorProperties') {
+					structs_def.push(indent1 + 'cgltf_size* ' + name + '_floats_size;');
+					free_def.push(indent1 + 'memory->free(memory->user_data, data->' + name + '_floats_size);');
+					parse_def.push(indent5 + 'i = cgltf_parse_json_floats_properties(options, tokens, i + 1, json_chunk, &out_data->' + name + '_keys, &out_data->' + name + '_values, &out_data->' + name + '_floats_size, &out_data->' + name + '_count);');
+				} else {
+					parse_def.push(indent5 + 'i = cgltf_parse_json_chars_properties(options, tokens, i + 1, json_chunk, &out_data->' + name + '_keys, &out_data->' + name + '_values, &out_data->' + name + '_count);');
+				}
+
 			} else {
 				throw new Error('Unknown type: ' + json.type + ' for ' + name + ' in ' + file);
 			}

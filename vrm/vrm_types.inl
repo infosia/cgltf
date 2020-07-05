@@ -104,6 +104,7 @@ static void cgltf_vrm_material_free(const struct cgltf_memory_options* memory, c
 	}
 	memory->free(memory->user_data, data->vectorProperties_keys);
 	memory->free(memory->user_data, data->vectorProperties_values);
+	memory->free(memory->user_data, data->vectorProperties_floats_size);
 	for (cgltf_size i = 0; i < data->textureProperties_count; i++) {
 		memory->free(memory->user_data, data->textureProperties_keys[i]);
 	}
@@ -871,7 +872,7 @@ static int cgltf_parse_json_vrm_material(cgltf_options* options, jsmntok_t const
 			} else if (cgltf_json_strcmp(tokens + i, json_chunk, "floatProperties") == 0) {
 					i = cgltf_parse_json_float_properties(options, tokens, i + 1, json_chunk, &out_data->floatProperties_keys, &out_data->floatProperties_values, &out_data->floatProperties_count);
 			} else if (cgltf_json_strcmp(tokens + i, json_chunk, "vectorProperties") == 0) {
-					i = cgltf_parse_json_floats_properties(options, tokens, i + 1, json_chunk, &out_data->vectorProperties_keys, &out_data->vectorProperties_values, &out_data->vectorProperties_count);
+					i = cgltf_parse_json_floats_properties(options, tokens, i + 1, json_chunk, &out_data->vectorProperties_keys, &out_data->vectorProperties_values, &out_data->vectorProperties_floats_size, &out_data->vectorProperties_count);
 			} else if (cgltf_json_strcmp(tokens + i, json_chunk, "textureProperties") == 0) {
 					i = cgltf_parse_json_int_properties(options, tokens, i + 1, json_chunk, &out_data->textureProperties_keys, &out_data->textureProperties_values, &out_data->textureProperties_count);
 			} else if (cgltf_json_strcmp(tokens + i, json_chunk, "keywordMap") == 0) {
