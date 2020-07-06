@@ -1,5 +1,5 @@
-# :diamond_shape_with_a_dot_inside: cgltf
-**Single-file/stb-style C glTF loader and writer (with VRM loader support)**
+# :diamond_shape_with_a_dot_inside: cgltf + VRM
+**Single-file/stb-style C glTF loader and writer (with VRM support)**
 
 [![Build Status](https://travis-ci.org/jkuhlmann/cgltf.svg?branch=master)](https://travis-ci.org/jkuhlmann/cgltf)
 
@@ -44,8 +44,8 @@ For buffer data, you can alternatively call `cgltf_load_buffers`, which will use
 
 **For more in-depth documentation and a description of the public interface refer to the top of the `cgltf.h` file.**
 
-## Usage: Writing (VRM is not supported)
-When writing glTF data, you need a valid `cgltf_data` structure that represents a valid glTF document. You can construct such a structure yourself or load it using the loader functions described above. The writer functions do not deallocate any memory. So, you either have to do it manually or call `cgltf_free()` if you got the data by loading it from a glTF document.
+## Usage: Writing
+When writing glTF (and VRM) JSON data, you need a valid `cgltf_data` structure that represents a valid glTF document. You can construct such a structure yourself or load it using the loader functions described above. The writer functions do not deallocate any memory. So, you either have to do it manually or call `cgltf_free()` if you got the data by loading it from a glTF document.
 
 Writing to file:
 ```c
