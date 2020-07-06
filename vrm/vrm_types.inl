@@ -480,7 +480,7 @@ static cgltf_bool select_cgltf_vrm_meta_licenseName(const char* name, cgltf_vrm_
 	}
 	return 0;
 }
-static char* cgltf_vrm_blendshape_group_presetName_to_str(const cgltf_vrm_blendshape_group_presetName in) {
+static const char* cgltf_vrm_blendshape_group_presetName_to_str(const cgltf_vrm_blendshape_group_presetName in) {
 	switch (in) {
 		case cgltf_vrm_blendshape_group_presetName_unknown: return "unknown";
 		case cgltf_vrm_blendshape_group_presetName_neutral: return "neutral";
@@ -504,7 +504,7 @@ static char* cgltf_vrm_blendshape_group_presetName_to_str(const cgltf_vrm_blends
 	}
 }
 
-static char* cgltf_vrm_firstperson_lookAtTypeName_to_str(const cgltf_vrm_firstperson_lookAtTypeName in) {
+static const char* cgltf_vrm_firstperson_lookAtTypeName_to_str(const cgltf_vrm_firstperson_lookAtTypeName in) {
 	switch (in) {
 		case cgltf_vrm_firstperson_lookAtTypeName_Bone: return "Bone";
 		case cgltf_vrm_firstperson_lookAtTypeName_BlendShape: return "BlendShape";
@@ -512,7 +512,7 @@ static char* cgltf_vrm_firstperson_lookAtTypeName_to_str(const cgltf_vrm_firstpe
 	}
 }
 
-static char* cgltf_vrm_humanoid_bone_bone_to_str(const cgltf_vrm_humanoid_bone_bone in) {
+static const char* cgltf_vrm_humanoid_bone_bone_to_str(const cgltf_vrm_humanoid_bone_bone in) {
 	switch (in) {
 		case cgltf_vrm_humanoid_bone_bone_hips: return "hips";
 		case cgltf_vrm_humanoid_bone_bone_leftUpperLeg: return "leftUpperLeg";
@@ -573,7 +573,7 @@ static char* cgltf_vrm_humanoid_bone_bone_to_str(const cgltf_vrm_humanoid_bone_b
 	}
 }
 
-static char* cgltf_vrm_meta_allowedUserName_to_str(const cgltf_vrm_meta_allowedUserName in) {
+static const char* cgltf_vrm_meta_allowedUserName_to_str(const cgltf_vrm_meta_allowedUserName in) {
 	switch (in) {
 		case cgltf_vrm_meta_allowedUserName_OnlyAuthor: return "OnlyAuthor";
 		case cgltf_vrm_meta_allowedUserName_ExplicitlyLicensedPerson: return "ExplicitlyLicensedPerson";
@@ -582,7 +582,7 @@ static char* cgltf_vrm_meta_allowedUserName_to_str(const cgltf_vrm_meta_allowedU
 	}
 }
 
-static char* cgltf_vrm_meta_violentUssageName_to_str(const cgltf_vrm_meta_violentUssageName in) {
+static const char* cgltf_vrm_meta_violentUssageName_to_str(const cgltf_vrm_meta_violentUssageName in) {
 	switch (in) {
 		case cgltf_vrm_meta_violentUssageName_Disallow: return "Disallow";
 		case cgltf_vrm_meta_violentUssageName_Allow: return "Allow";
@@ -590,7 +590,7 @@ static char* cgltf_vrm_meta_violentUssageName_to_str(const cgltf_vrm_meta_violen
 	}
 }
 
-static char* cgltf_vrm_meta_sexualUssageName_to_str(const cgltf_vrm_meta_sexualUssageName in) {
+static const char* cgltf_vrm_meta_sexualUssageName_to_str(const cgltf_vrm_meta_sexualUssageName in) {
 	switch (in) {
 		case cgltf_vrm_meta_sexualUssageName_Disallow: return "Disallow";
 		case cgltf_vrm_meta_sexualUssageName_Allow: return "Allow";
@@ -598,7 +598,7 @@ static char* cgltf_vrm_meta_sexualUssageName_to_str(const cgltf_vrm_meta_sexualU
 	}
 }
 
-static char* cgltf_vrm_meta_commercialUssageName_to_str(const cgltf_vrm_meta_commercialUssageName in) {
+static const char* cgltf_vrm_meta_commercialUssageName_to_str(const cgltf_vrm_meta_commercialUssageName in) {
 	switch (in) {
 		case cgltf_vrm_meta_commercialUssageName_Disallow: return "Disallow";
 		case cgltf_vrm_meta_commercialUssageName_Allow: return "Allow";
@@ -606,7 +606,7 @@ static char* cgltf_vrm_meta_commercialUssageName_to_str(const cgltf_vrm_meta_com
 	}
 }
 
-static char* cgltf_vrm_meta_licenseName_to_str(const cgltf_vrm_meta_licenseName in) {
+static const char* cgltf_vrm_meta_licenseName_to_str(const cgltf_vrm_meta_licenseName in) {
 	switch (in) {
 		case cgltf_vrm_meta_licenseName_Redistribution_Prohibited: return "Redistribution_Prohibited";
 		case cgltf_vrm_meta_licenseName_CC0: return "CC0";

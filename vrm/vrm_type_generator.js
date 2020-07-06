@@ -95,7 +95,7 @@ function parse(json, file, rootType, subType) {
 				enums_def.push('typedef enum ' + enumname + ' {');
 				enum_selector_def.push('static cgltf_bool select_' + enumname + '(const char* name, ' + enumname + '* out) {');
 
-				enum_to_str_def.push('static char* ' + enumname + '_to_str(const ' + enumname + ' in) {');
+				enum_to_str_def.push('static const char* ' + enumname + '_to_str(const ' + enumname + ' in) {');
 				enum_to_str_def.push(indent1 + 'switch (in) {');	
 
 				enum_selector_def.push(indent1 + 'if (strlen(name) == 0) {');
