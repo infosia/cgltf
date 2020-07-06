@@ -299,6 +299,31 @@ static void cgltf_write_vrm_material(cgltf_write_context* context, const cgltf_v
 	cgltf_write_strprop(context, "name", data->name);
 	cgltf_write_strprop(context, "shader", data->shader);
 	cgltf_write_intprop(context, "renderQueue", data->renderQueue, 0);
+	cgltf_write_line(context, "\"floatProperties\": {");
+	for (cgltf_size i = 0; i < data->floatProperties_count; i++) {
+		cgltf_write_floatprop(context, data->floatProperties_keys[i], data->floatProperties_values[i], 0);
+	}
+	cgltf_write_line(context, "}");
+	cgltf_write_line(context, "\"vectorProperties\": {");
+	for (cgltf_size i = 0; i < data->vectorProperties_count; i++) {
+		cgltf_write_floatarrayprop(context, data->vectorProperties_keys[i], data->vectorProperties_values[i], data->vectorProperties_floats_size[i]);
+	}
+	cgltf_write_line(context, "}");
+	cgltf_write_line(context, "\"textureProperties\": {");
+	for (cgltf_size i = 0; i < data->textureProperties_count; i++) {
+		cgltf_write_intprop(context, data->textureProperties_keys[i], data->textureProperties_values[i], 0);
+	}
+	cgltf_write_line(context, "}");
+	cgltf_write_line(context, "\"keywordMap\": {");
+	for (cgltf_size i = 0; i < data->keywordMap_count; i++) {
+		cgltf_write_boolprop_optional(context, data->keywordMap_keys[i], data->keywordMap_values[i], 0);
+	}
+	cgltf_write_line(context, "}");
+	cgltf_write_line(context, "\"tagMap\": {");
+	for (cgltf_size i = 0; i < data->tagMap_count; i++) {
+		cgltf_write_strprop(context, data->tagMap_keys[i], data->tagMap_values[i]);
+	}
+	cgltf_write_line(context, "}");
 	cgltf_write_line(context, "}");
 }
 static void cgltf_write_vrm_meta(cgltf_write_context* context, const cgltf_vrm_meta* data) {

@@ -42,9 +42,9 @@ function selectPrimitiveParser(type) {
 
 function selectWriteFunc(type) {
 	if (type == 'string') return 'cgltf_write_strprop';
-	if (type == 'integer') return 'cgltf_write_intprop';
-	if (type == 'number')  return 'cgltf_write_floatprop';
-	if (type == 'boolean') return 'cgltf_write_boolprop_optional';
+	if (type == 'integer' || type == 'cgltf_int')    return 'cgltf_write_intprop';
+	if (type == 'number'  || type == 'cgltf_float')  return 'cgltf_write_floatprop';
+	if (type == 'boolean' || type == 'cgltf_bool')   return 'cgltf_write_boolprop_optional';
 	return type;
 }
 
@@ -165,6 +165,12 @@ function parse(json, file, rootType, subType) {
 				free_def.push(indent1 + 'memory->free(memory->user_data, data->' + name + '_values);');
 
 				parse_def.push(indent5 + 'i = cgltf_parse_json_' + property_type.replace('cgltf_', '') + '_properties(options, tokens, i + 1, json_chunk, &out_data->' + name + '_keys, &out_data->' + name + '_values, &out_data->' + name + '_count);');
+
+				write_def.push(indent1 + 'cgltf_write_line(context, "\\"' + name + '\\": {");');
+				write_def.push(indent1 + 'for (cgltf_size i = 0; i < data->' + name + '_count; i++) {');
+				write_def.push(indent2 + selectWriteFunc(property_type) + '(context, data->' + name + '_keys[i], data->' + name + '_values[i], 0);');
+				write_def.push(indent1 + '}');
+				write_def.push(indent1 + 'cgltf_write_line(context, "}");');
 			} else if (name == 'vectorProperties' || name == 'tagMap') {
 				const property_type = selectType(name);
 				structs_def.push(indent1 + 'char** ' + name + '_keys;');
@@ -179,14 +185,22 @@ function parse(json, file, rootType, subType) {
 				free_def.push(indent1 + 'memory->free(memory->user_data, data->' + name + '_keys);');
 				free_def.push(indent1 + 'memory->free(memory->user_data, data->' + name + '_values);');
 
+				write_def.push(indent1 + 'cgltf_write_line(context, "\\"' + name + '\\": {");');
+				write_def.push(indent1 + 'for (cgltf_size i = 0; i < data->' + name + '_count; i++) {');
 				if (name == 'vectorProperties') {
 					structs_def.push(indent1 + 'cgltf_size* ' + name + '_floats_size;');
 					free_def.push(indent1 + 'memory->free(memory->user_data, data->' + name + '_floats_size);');
 					parse_def.push(indent5 + 'i = cgltf_parse_json_floats_properties(options, tokens, i + 1, json_chunk, &out_data->' + name + '_keys, &out_data->' + name + '_values, &out_data->' + name + '_floats_size, &out_data->' + name + '_count);');
+
+					write_def.push(indent2 + 'cgltf_write_floatarrayprop(context, data->' + name + '_keys[i], data->' + name + '_values[i], data->' + name + '_floats_size[i]);');
+
 				} else {
 					parse_def.push(indent5 + 'i = cgltf_parse_json_chars_properties(options, tokens, i + 1, json_chunk, &out_data->' + name + '_keys, &out_data->' + name + '_values, &out_data->' + name + '_count);');
+					write_def.push(indent2 + 'cgltf_write_strprop(context, data->' + name + '_keys[i], data->' + name + '_values[i]);');
 				}
 
+				write_def.push(indent1 + '}');
+				write_def.push(indent1 + 'cgltf_write_line(context, "}");');
 			} else {
 				throw new Error('Unknown type: ' + json.type + ' for ' + name + ' in ' + file);
 			}
