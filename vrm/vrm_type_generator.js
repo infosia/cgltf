@@ -350,11 +350,15 @@ fs.readdir(basepath, (err, files) => {
 	typesStream.write(structs_def.join('\n'));
 	typesImplStream.write(free_def.join('\n'));
 	typesImplStream.write(enum_selector_def.join('\n'));
-	typesImplStream.write(enum_to_str_def.join('\n'));
 	typesImplStream.write(parse_def.join('\n'));
+	writeImplStream.write(enum_to_str_def.join('\n'));
 	writeImplStream.write(write_def.join('\n'));
 
 	typesStream.write(fs.readFileSync(path.join(__dirname, 'vrm_types_footer.txt'), 'utf8'));
+
+	typesStream.write('\n');
+	typesImplStream.write('\n');
+	writeImplStream.write('\n');
 
 	typesStream.end();
 	typesImplStream.end();

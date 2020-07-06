@@ -1,3 +1,143 @@
+static const char* cgltf_vrm_blendshape_group_presetName_to_str(const cgltf_vrm_blendshape_group_presetName in) {
+	switch (in) {
+		case cgltf_vrm_blendshape_group_presetName_unknown: return "unknown";
+		case cgltf_vrm_blendshape_group_presetName_neutral: return "neutral";
+		case cgltf_vrm_blendshape_group_presetName_a: return "a";
+		case cgltf_vrm_blendshape_group_presetName_i: return "i";
+		case cgltf_vrm_blendshape_group_presetName_u: return "u";
+		case cgltf_vrm_blendshape_group_presetName_e: return "e";
+		case cgltf_vrm_blendshape_group_presetName_o: return "o";
+		case cgltf_vrm_blendshape_group_presetName_blink: return "blink";
+		case cgltf_vrm_blendshape_group_presetName_joy: return "joy";
+		case cgltf_vrm_blendshape_group_presetName_angry: return "angry";
+		case cgltf_vrm_blendshape_group_presetName_sorrow: return "sorrow";
+		case cgltf_vrm_blendshape_group_presetName_fun: return "fun";
+		case cgltf_vrm_blendshape_group_presetName_lookup: return "lookup";
+		case cgltf_vrm_blendshape_group_presetName_lookdown: return "lookdown";
+		case cgltf_vrm_blendshape_group_presetName_lookleft: return "lookleft";
+		case cgltf_vrm_blendshape_group_presetName_lookright: return "lookright";
+		case cgltf_vrm_blendshape_group_presetName_blink_l: return "blink_l";
+		case cgltf_vrm_blendshape_group_presetName_blink_r: return "blink_r";
+		default: return "";
+	}
+}
+
+static const char* cgltf_vrm_firstperson_lookAtTypeName_to_str(const cgltf_vrm_firstperson_lookAtTypeName in) {
+	switch (in) {
+		case cgltf_vrm_firstperson_lookAtTypeName_Bone: return "Bone";
+		case cgltf_vrm_firstperson_lookAtTypeName_BlendShape: return "BlendShape";
+		default: return "";
+	}
+}
+
+static const char* cgltf_vrm_humanoid_bone_bone_to_str(const cgltf_vrm_humanoid_bone_bone in) {
+	switch (in) {
+		case cgltf_vrm_humanoid_bone_bone_hips: return "hips";
+		case cgltf_vrm_humanoid_bone_bone_leftUpperLeg: return "leftUpperLeg";
+		case cgltf_vrm_humanoid_bone_bone_rightUpperLeg: return "rightUpperLeg";
+		case cgltf_vrm_humanoid_bone_bone_leftLowerLeg: return "leftLowerLeg";
+		case cgltf_vrm_humanoid_bone_bone_rightLowerLeg: return "rightLowerLeg";
+		case cgltf_vrm_humanoid_bone_bone_leftFoot: return "leftFoot";
+		case cgltf_vrm_humanoid_bone_bone_rightFoot: return "rightFoot";
+		case cgltf_vrm_humanoid_bone_bone_spine: return "spine";
+		case cgltf_vrm_humanoid_bone_bone_chest: return "chest";
+		case cgltf_vrm_humanoid_bone_bone_neck: return "neck";
+		case cgltf_vrm_humanoid_bone_bone_head: return "head";
+		case cgltf_vrm_humanoid_bone_bone_leftShoulder: return "leftShoulder";
+		case cgltf_vrm_humanoid_bone_bone_rightShoulder: return "rightShoulder";
+		case cgltf_vrm_humanoid_bone_bone_leftUpperArm: return "leftUpperArm";
+		case cgltf_vrm_humanoid_bone_bone_rightUpperArm: return "rightUpperArm";
+		case cgltf_vrm_humanoid_bone_bone_leftLowerArm: return "leftLowerArm";
+		case cgltf_vrm_humanoid_bone_bone_rightLowerArm: return "rightLowerArm";
+		case cgltf_vrm_humanoid_bone_bone_leftHand: return "leftHand";
+		case cgltf_vrm_humanoid_bone_bone_rightHand: return "rightHand";
+		case cgltf_vrm_humanoid_bone_bone_leftToes: return "leftToes";
+		case cgltf_vrm_humanoid_bone_bone_rightToes: return "rightToes";
+		case cgltf_vrm_humanoid_bone_bone_leftEye: return "leftEye";
+		case cgltf_vrm_humanoid_bone_bone_rightEye: return "rightEye";
+		case cgltf_vrm_humanoid_bone_bone_jaw: return "jaw";
+		case cgltf_vrm_humanoid_bone_bone_leftThumbProximal: return "leftThumbProximal";
+		case cgltf_vrm_humanoid_bone_bone_leftThumbIntermediate: return "leftThumbIntermediate";
+		case cgltf_vrm_humanoid_bone_bone_leftThumbDistal: return "leftThumbDistal";
+		case cgltf_vrm_humanoid_bone_bone_leftIndexProximal: return "leftIndexProximal";
+		case cgltf_vrm_humanoid_bone_bone_leftIndexIntermediate: return "leftIndexIntermediate";
+		case cgltf_vrm_humanoid_bone_bone_leftIndexDistal: return "leftIndexDistal";
+		case cgltf_vrm_humanoid_bone_bone_leftMiddleProximal: return "leftMiddleProximal";
+		case cgltf_vrm_humanoid_bone_bone_leftMiddleIntermediate: return "leftMiddleIntermediate";
+		case cgltf_vrm_humanoid_bone_bone_leftMiddleDistal: return "leftMiddleDistal";
+		case cgltf_vrm_humanoid_bone_bone_leftRingProximal: return "leftRingProximal";
+		case cgltf_vrm_humanoid_bone_bone_leftRingIntermediate: return "leftRingIntermediate";
+		case cgltf_vrm_humanoid_bone_bone_leftRingDistal: return "leftRingDistal";
+		case cgltf_vrm_humanoid_bone_bone_leftLittleProximal: return "leftLittleProximal";
+		case cgltf_vrm_humanoid_bone_bone_leftLittleIntermediate: return "leftLittleIntermediate";
+		case cgltf_vrm_humanoid_bone_bone_leftLittleDistal: return "leftLittleDistal";
+		case cgltf_vrm_humanoid_bone_bone_rightThumbProximal: return "rightThumbProximal";
+		case cgltf_vrm_humanoid_bone_bone_rightThumbIntermediate: return "rightThumbIntermediate";
+		case cgltf_vrm_humanoid_bone_bone_rightThumbDistal: return "rightThumbDistal";
+		case cgltf_vrm_humanoid_bone_bone_rightIndexProximal: return "rightIndexProximal";
+		case cgltf_vrm_humanoid_bone_bone_rightIndexIntermediate: return "rightIndexIntermediate";
+		case cgltf_vrm_humanoid_bone_bone_rightIndexDistal: return "rightIndexDistal";
+		case cgltf_vrm_humanoid_bone_bone_rightMiddleProximal: return "rightMiddleProximal";
+		case cgltf_vrm_humanoid_bone_bone_rightMiddleIntermediate: return "rightMiddleIntermediate";
+		case cgltf_vrm_humanoid_bone_bone_rightMiddleDistal: return "rightMiddleDistal";
+		case cgltf_vrm_humanoid_bone_bone_rightRingProximal: return "rightRingProximal";
+		case cgltf_vrm_humanoid_bone_bone_rightRingIntermediate: return "rightRingIntermediate";
+		case cgltf_vrm_humanoid_bone_bone_rightRingDistal: return "rightRingDistal";
+		case cgltf_vrm_humanoid_bone_bone_rightLittleProximal: return "rightLittleProximal";
+		case cgltf_vrm_humanoid_bone_bone_rightLittleIntermediate: return "rightLittleIntermediate";
+		case cgltf_vrm_humanoid_bone_bone_rightLittleDistal: return "rightLittleDistal";
+		case cgltf_vrm_humanoid_bone_bone_upperChest: return "upperChest";
+		default: return "";
+	}
+}
+
+static const char* cgltf_vrm_meta_allowedUserName_to_str(const cgltf_vrm_meta_allowedUserName in) {
+	switch (in) {
+		case cgltf_vrm_meta_allowedUserName_OnlyAuthor: return "OnlyAuthor";
+		case cgltf_vrm_meta_allowedUserName_ExplicitlyLicensedPerson: return "ExplicitlyLicensedPerson";
+		case cgltf_vrm_meta_allowedUserName_Everyone: return "Everyone";
+		default: return "";
+	}
+}
+
+static const char* cgltf_vrm_meta_violentUssageName_to_str(const cgltf_vrm_meta_violentUssageName in) {
+	switch (in) {
+		case cgltf_vrm_meta_violentUssageName_Disallow: return "Disallow";
+		case cgltf_vrm_meta_violentUssageName_Allow: return "Allow";
+		default: return "";
+	}
+}
+
+static const char* cgltf_vrm_meta_sexualUssageName_to_str(const cgltf_vrm_meta_sexualUssageName in) {
+	switch (in) {
+		case cgltf_vrm_meta_sexualUssageName_Disallow: return "Disallow";
+		case cgltf_vrm_meta_sexualUssageName_Allow: return "Allow";
+		default: return "";
+	}
+}
+
+static const char* cgltf_vrm_meta_commercialUssageName_to_str(const cgltf_vrm_meta_commercialUssageName in) {
+	switch (in) {
+		case cgltf_vrm_meta_commercialUssageName_Disallow: return "Disallow";
+		case cgltf_vrm_meta_commercialUssageName_Allow: return "Allow";
+		default: return "";
+	}
+}
+
+static const char* cgltf_vrm_meta_licenseName_to_str(const cgltf_vrm_meta_licenseName in) {
+	switch (in) {
+		case cgltf_vrm_meta_licenseName_Redistribution_Prohibited: return "Redistribution_Prohibited";
+		case cgltf_vrm_meta_licenseName_CC0: return "CC0";
+		case cgltf_vrm_meta_licenseName_CC_BY: return "CC_BY";
+		case cgltf_vrm_meta_licenseName_CC_BY_NC: return "CC_BY_NC";
+		case cgltf_vrm_meta_licenseName_CC_BY_SA: return "CC_BY_SA";
+		case cgltf_vrm_meta_licenseName_CC_BY_NC_SA: return "CC_BY_NC_SA";
+		case cgltf_vrm_meta_licenseName_CC_BY_ND: return "CC_BY_ND";
+		case cgltf_vrm_meta_licenseName_CC_BY_NC_ND: return "CC_BY_NC_ND";
+		case cgltf_vrm_meta_licenseName_Other: return "Other";
+		default: return "";
+	}
+}
 static void cgltf_write_vrm_secondaryanimation_collidergroup_colliders(cgltf_write_context* context, const cgltf_vrm_secondaryanimation_collidergroup_colliders* data) {
 	cgltf_write_line(context, "{");
 	if (data->offset_count > 0) {
