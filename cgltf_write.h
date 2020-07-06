@@ -245,6 +245,25 @@ static void cgltf_write_boolprop_optional(cgltf_write_context* context, const ch
 	}
 }
 
+static void cgltf_write_intarrayprop(cgltf_write_context* context, const char* label, const cgltf_int* vals, cgltf_size dim)
+{
+	cgltf_write_indent(context);
+	CGLTF_SPRINTF("\"%s\": [", label);
+	for (cgltf_size i = 0; i < dim; ++i)
+	{
+		if (i != 0)
+		{
+			CGLTF_SPRINTF(", %d", vals[i]);
+		}
+		else
+		{
+			CGLTF_SPRINTF("%d", vals[i]);
+		}
+	}
+	CGLTF_SPRINTF("]");
+	context->needs_comma = 1;
+}
+
 static void cgltf_write_floatarrayprop(cgltf_write_context* context, const char* label, const cgltf_float* vals, cgltf_size dim)
 {
 	cgltf_write_indent(context);
@@ -902,6 +921,8 @@ static void cgltf_write_extensions(cgltf_write_context* context, uint32_t extens
 	}
 }
 
+#include "vrm/vrm_write.inl"
+
 cgltf_size cgltf_write(const cgltf_options* options, char* buffer, cgltf_size size, const cgltf_data* data)
 {
 	(void)options;
@@ -1072,9 +1093,12 @@ cgltf_size cgltf_write(const cgltf_options* options, char* buffer, cgltf_size si
 		cgltf_write_line(context, "}");
 	}
 
-	if (context->extension_flags != 0) {
+	if (context->data->has_vrm || context->extension_flags != 0) {
 		cgltf_write_line(context, "\"extensionsUsed\": [");
 		cgltf_write_extensions(context, context->extension_flags);
+		if (context->data->has_vrm) {
+			cgltf_write_stritem(context, "VRM");
+		}
 		cgltf_write_line(context, "]");
 	}
 
@@ -1083,6 +1107,13 @@ cgltf_size cgltf_write(const cgltf_options* options, char* buffer, cgltf_size si
 		cgltf_write_extensions(context, context->required_extension_flags);
 		cgltf_write_line(context, "]");
 	}
+
+	cgltf_write_line(context, "\"extensions\": {");
+	if (context->data->has_vrm) {
+		cgltf_write_line(context, "\"VRM\": ");
+		cgltf_write_vrm(context, &context->data->vrm);
+	}
+	cgltf_write_line(context, "}");
 
 	CGLTF_SPRINTF("\n}\n");
 

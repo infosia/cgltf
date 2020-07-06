@@ -130,6 +130,7 @@ typedef enum cgltf_vrm_meta_licenseName {
 } cgltf_vrm_meta_licenseName;
 typedef struct cgltf_vrm_secondaryanimation_collidergroup_colliders {
 	cgltf_float* offset; // [x, y, z]
+	cgltf_size offset_count;
 	cgltf_float radius;
 } cgltf_vrm_secondaryanimation_collidergroup_colliders;
 typedef struct cgltf_vrm_secondaryanimation_spring {
@@ -137,6 +138,7 @@ typedef struct cgltf_vrm_secondaryanimation_spring {
 	cgltf_float stiffiness;
 	cgltf_float gravityPower;
 	cgltf_float* gravityDir; // [x, y, z]
+	cgltf_size gravityDir_count;
 	cgltf_float dragForce;
 	cgltf_int center;
 	cgltf_float hitRadius;
@@ -202,6 +204,7 @@ typedef struct cgltf_vrm_firstperson_meshannotation {
 typedef struct cgltf_vrm_firstperson {
 	cgltf_int firstPersonBone;
 	cgltf_float* firstPersonBoneOffset; // [x, y, z]
+	cgltf_size firstPersonBoneOffset_count;
 	cgltf_vrm_firstperson_meshannotation* meshAnnotations;
 	cgltf_size meshAnnotations_count;
 	cgltf_vrm_firstperson_lookAtTypeName lookAtTypeName;
@@ -216,8 +219,11 @@ typedef struct cgltf_vrm_humanoid_bone {
 	cgltf_int node;
 	cgltf_bool useDefaultValues;
 	cgltf_float* min; // [x, y, z]
+	cgltf_size min_count;
 	cgltf_float* max; // [x, y, z]
+	cgltf_size max_count;
 	cgltf_float* center; // [x, y, z]
+	cgltf_size center_count;
 	cgltf_float axisLength;
 } cgltf_vrm_humanoid_bone;
 

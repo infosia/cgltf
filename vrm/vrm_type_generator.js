@@ -40,6 +40,14 @@ function selectPrimitiveParser(type) {
 	return undefined;
 }
 
+function selectWriteFunc(type) {
+	if (type == 'string') return 'cgltf_write_strprop';
+	if (type == 'integer') return 'cgltf_write_intprop';
+	if (type == 'number')  return 'cgltf_write_floatprop';
+	if (type == 'boolean') return 'cgltf_write_boolprop_optional';
+	return type;
+}
+
 function vec3(items) {
 	return (items.properties && items.properties.x && items.properties.y && items.properties.z
 		&& items.properties.x.type == 'number' && items.properties.y.type == 'number' && items.properties.z.type == 'number');
@@ -58,6 +66,7 @@ function parse(json, file, rootType, subType) {
 	let free_def = [];
 	let enum_selector_def = [];
 	let parse_def = [];
+	let write_def = [];
 
 	free_def.push('static void ' + typename + '_free(const struct cgltf_memory_options* memory, ' + typename + '* data) {');
 	parse_def.push('static int cgltf_parse_json_' + typename.replace('cgltf_', '') + '(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, ' + typename +'* out_data) {');
@@ -69,6 +78,9 @@ function parse(json, file, rootType, subType) {
 	parse_def.push(indent4 + 'continue;');
 
 	structs_def.push('typedef struct ' + typename + ' {')
+
+	write_def.push('static void cgltf_write_' + typename.replace('cgltf_', '') + '(cgltf_write_context* context, const ' + typename + '* data) {');
+	write_def.push(indent1 + 'cgltf_write_line(context, "{");');
 
 	Object.keys(json.properties).forEach(name => {
 		const type = json.properties[name].type;
@@ -106,6 +118,7 @@ function parse(json, file, rootType, subType) {
 				structs_def.push(indent1 + 'char* ' + name + ';');
 				free_def.push(indent1 + 'memory->free(memory->user_data, data->' + name + ');');
 				parse_def.push(indent4 + 'i = cgltf_parse_json_string(options, tokens, i + 1, json_chunk, &out_data->' + name + ');');
+				write_def.push(indent1 + selectWriteFunc(type) + '(context, "' + name + '", data->' + name + ');');
 			}
 		} else if (primitive) {
 			structs_def.push(indent1 + primitive + ' ' + name + ';');
@@ -116,13 +129,18 @@ function parse(json, file, rootType, subType) {
 			} else {
 				throw new Error('Unknown type: ' + type + ' for ' + name + ' in ' + file);
 			}
+			write_def.push(indent1 + selectWriteFunc(type) + '(context, "' + name + '", data->' + name + ', 0);');
 		} else if (type == 'object') {
 			parse_def.push(indent3 + '} else if (cgltf_json_strcmp(tokens + i, json_chunk, "' + name + '") == 0) {');
 
 			if (vec3(json.properties[name])) {
 				structs_def.push(indent1 + 'cgltf_float* ' + name + '; // [x, y, z]');
+				structs_def.push(indent1 + 'cgltf_size ' + name + '_count;');
 				free_def.push(indent1 + 'memory->free(memory->user_data, data->' + name + ');');
-				parse_def.push(indent4 + 'i = cgltf_parse_json_vec3(options, tokens, i + 1, json_chunk, &out_data->' + name + ');');
+				parse_def.push(indent4 + 'i = cgltf_parse_json_vec3(options, tokens, i + 1, json_chunk, &out_data->' + name + ', &out_data->' + name + '_count);');
+				write_def.push(indent1 + 'if (data->' + name + '_count > 0) {');
+				write_def.push(indent2 + 'cgltf_write_floatarrayprop(context, "' + name + '", data->' + name + ', 3);');
+				write_def.push(indent1 + '}');
 			} else if (name == 'floatProperties' || name == 'textureProperties' || name == 'keywordMap') {
 				const property_type = selectType(name);
 				structs_def.push(indent1 + 'char** ' + name + '_keys;');
@@ -180,21 +198,31 @@ function parse(json, file, rootType, subType) {
 					parse_def.push(indent4 + 'for (cgltf_int k = 0; k < out_data->' + name + '_count; k++) {');
 					parse_def.push(indent5 + 'i = cgltf_parse_json_' + refname + '(options, tokens, i, json_chunk, out_data->' + name + ' + k);');
 					parse_def.push(indent4 + '}');
+
+					write_def.push(indent1 + 'cgltf_write_line(context, "\\"' + name + '\\": [");');
+					write_def.push(indent1 + 'for (cgltf_size i = 0; i < data->' + name + '_count; ++i) {');
+					write_def.push(indent2 + 'cgltf_write_' + refname + '(context, data->' + name + ' + i);');
+					write_def.push(indent1 + '}');
+					write_def.push(indent1 + 'cgltf_write_line(context, "]");');
+
 				} else if (primitives) {
 					structs_def.push(indent1 + primitives + '* ' + name + ';');
 					if (items.type == 'number') {
 						parse_def.push(indent4 + 'i = cgltf_parse_json_array(options, tokens, i + 1, json_chunk, sizeof(cgltf_float), (void**)&out_data->' + name + ', &out_data->' + name + '_count);');
 						parse_def.push(indent4 + 'if (i < 0) return i;');
 						parse_def.push(indent4 + 'i = cgltf_parse_json_float_array(tokens, i - 1, json_chunk, out_data->' + name + ', (int)out_data->' + name + '_count);');
+						write_def.push(indent1 + 'cgltf_write_floatarrayprop(context, "' + name + '", data->' + name + ', data->' + name + '_count);');
 					} else if (items.type == 'integer') {
 						parse_def.push(indent4 + 'i = cgltf_parse_json_array(options, tokens, i + 1, json_chunk, sizeof(cgltf_int), (void**)&out_data->' + name + ', &out_data->' + name + '_count);');
 						parse_def.push(indent4 + 'if (i < 0) return i;');
 						parse_def.push(indent4 + 'i = cgltf_parse_json_int_array(tokens, i - 1, json_chunk, out_data->' + name + ', (int)out_data->' + name + '_count);');
+						write_def.push(indent1 + 'cgltf_write_intarrayprop(context, "' + name + '", data->' + name + ', data->' + name + '_count);');
 					} else {
 						throw new Error('Unknown type: ' + items.type + ' for ' + name + '.items in ' + file);
 					}
 				} else if (items.type == 'object') {
 					let member_type = typename + '_' + name;
+					let member_func = member_type.replace('cgltf_', '');
 					structs_def.push(indent1 + member_type + '* ' + name + ';');
 					dependencies_def.push(parse(items, file, typename, name));
 					free_def.push(indent1 + 'for (cgltf_size i = 0; i < data->' + name + '_count; i++) {');
@@ -203,13 +231,21 @@ function parse(json, file, rootType, subType) {
 					parse_def.push(indent4 + 'i = cgltf_parse_json_array(options, tokens, i + 1, json_chunk, sizeof(' + member_type + '), (void**)&out_data->' + name + ', &out_data->' + name + '_count);');
 					parse_def.push(indent4 + 'if (i < 0) return i;');
 					parse_def.push(indent4 + 'for (cgltf_int k = 0; k < out_data->' + name + '_count; k++) {');
-					parse_def.push(indent5 + 'i = cgltf_parse_json_' + member_type.replace('cgltf_', '') + '(options, tokens, i, json_chunk, out_data->' + name + ' + k);');
+					parse_def.push(indent5 + 'i = cgltf_parse_json_' + member_func + '(options, tokens, i, json_chunk, out_data->' + name + ' + k);');
 					parse_def.push(indent4 + '}');
+
+					write_def.push(indent1 + 'cgltf_write_line(context, "\\"' + name + '\\": [");');
+					write_def.push(indent1 + 'for (cgltf_size i = 0; i < data->' + name + '_count; ++i) {');
+					write_def.push(indent2 + 'cgltf_write_' + member_func + '(context, data->' + name + ' + i);');
+					write_def.push(indent1 + '}');
+					write_def.push(indent1 + 'cgltf_write_line(context, "]");');
+
 				} else {
 					throw new Error('Unknown type: ' + items.type + ' for ' + name + '.items in ' + file);
 				}
 				structs_def.push(indent1 + 'cgltf_size ' + name + '_count;');
 				free_def.push(indent1 + 'memory->free(memory->user_data, data->' + name + ');');
+
 			} else {
 				throw new Error('Unknown type: ' + type + ' for ' + name + ' in ' + file);
 			}
@@ -219,6 +255,9 @@ function parse(json, file, rootType, subType) {
 			free_def.push(indent1 + prefix + refname + '_free(memory, &data->'  + name + ');');
 			parse_def.push(indent3 + '} else if (cgltf_json_strcmp(tokens + i, json_chunk, "' + name + '") == 0) {');
 			parse_def.push(indent4 + 'i = cgltf_parse_json_' + refname + '(options, tokens, i + 1, json_chunk, &out_data->' + name + ');');
+
+			write_def.push(indent1 + 'cgltf_write_line(context, "\\"' + name + '\\": ");');
+			write_def.push(indent1 + 'cgltf_write_' + refname + '(context, &data->' + name + ');');
 		} else {
 			throw new Error('Unknown type: ' + type + ' for ' + name + ' in ' + file);
 		}
@@ -248,15 +287,19 @@ function parse(json, file, rootType, subType) {
 
 	parse_def.push('}');
 
+	write_def.push(indent1 + 'cgltf_write_line(context, "}");');
+	write_def.push('}');
+
 	return {enums:enums_def, structs:structs_def, dependencies:dependencies_def,
-			 free: free_def, enum_selector:enum_selector_def, parse: parse_def};
+			 free: free_def, enum_selector:enum_selector_def, parse: parse_def, write: write_def};
 }
 
 fs.readdir(basepath, (err, files) => {
 	if (err) throw err;
 
 	let typesStream = fs.createWriteStream(path.join(__dirname, 'vrm_types.h'), 'utf8');
-	let inlStream   = fs.createWriteStream(path.join(__dirname, 'vrm_types.inl'), 'utf8');
+	let typesImplStream = fs.createWriteStream(path.join(__dirname, 'vrm_types.inl'), 'utf8');
+	let writeImplStream = fs.createWriteStream(path.join(__dirname, 'vrm_write.inl'), 'utf8');
 
 	typesStream.write(fs.readFileSync(path.join(__dirname, 'vrm_types_header.txt'), 'utf8'));
 
@@ -266,6 +309,7 @@ fs.readdir(basepath, (err, files) => {
 	let free_def = [];
 	let enum_selector_def = [];
 	let parse_def = [];
+	let write_def = [];
 
 	files.filter(file => /.*\.json$/.test(file)).forEach(file => {
 		const json = JSON.parse(fs.readFileSync(path.join(basepath, file), 'utf8'));
@@ -277,6 +321,7 @@ fs.readdir(basepath, (err, files) => {
 		if (defs.free) free_def = free_def.concat(defs.free);
 		if (defs.enum_selector) enum_selector_def = enum_selector_def.concat(defs.enum_selector);
 		if (defs.parse) parse_def = parse_def.concat(defs.parse);
+		if (defs.write) write_def = write_def.concat(defs.write);
 	});
 
 	typesStream.write(enums_def.join('\n'));
@@ -286,16 +331,19 @@ fs.readdir(basepath, (err, files) => {
 		if (deps.free) free_def = deps.free.concat(free_def);
 		if (deps.enum_selector) enum_selector_def = enum_selector_def.concat(deps.enum_selector);
 		if (deps.parse) parse_def = deps.parse.concat(parse_def);
+		if (deps.write) write_def = deps.write.concat(write_def);
 	});
 	typesStream.write(structs_def.join('\n'));
-	inlStream.write(free_def.join('\n'));
-	inlStream.write(enum_selector_def.join('\n'));
-	inlStream.write(parse_def.join('\n'));
+	typesImplStream.write(free_def.join('\n'));
+	typesImplStream.write(enum_selector_def.join('\n'));
+	typesImplStream.write(parse_def.join('\n'));
+	writeImplStream.write(write_def.join('\n'));
 
 	typesStream.write(fs.readFileSync(path.join(__dirname, 'vrm_types_footer.txt'), 'utf8'));
 
 	typesStream.close();
-	inlStream.close();
+	typesImplStream.close();
+	writeImplStream.close();
 });
 
 /* vrm_type_generator is distributed under MIT license:
