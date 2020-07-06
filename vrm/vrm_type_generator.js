@@ -205,7 +205,7 @@ function parse(json, file, rootType, subType) {
 					free_def.push(indent1 + '}');
 					parse_def.push(indent4 + 'i = cgltf_parse_json_array(options, tokens, i + 1, json_chunk, sizeof(' + prefix + refname + '), (void**)&out_data->' + name + ', &out_data->' + name + '_count);');
 					parse_def.push(indent4 + 'if (i < 0) return i;');
-					parse_def.push(indent4 + 'for (cgltf_int k = 0; k < out_data->' + name + '_count; k++) {');
+					parse_def.push(indent4 + 'for (cgltf_size k = 0; k < out_data->' + name + '_count; k++) {');
 					parse_def.push(indent5 + 'i = cgltf_parse_json_' + refname + '(options, tokens, i, json_chunk, out_data->' + name + ' + k);');
 					parse_def.push(indent4 + '}');
 
@@ -240,7 +240,7 @@ function parse(json, file, rootType, subType) {
 					free_def.push(indent1 + '}');
 					parse_def.push(indent4 + 'i = cgltf_parse_json_array(options, tokens, i + 1, json_chunk, sizeof(' + member_type + '), (void**)&out_data->' + name + ', &out_data->' + name + '_count);');
 					parse_def.push(indent4 + 'if (i < 0) return i;');
-					parse_def.push(indent4 + 'for (cgltf_int k = 0; k < out_data->' + name + '_count; k++) {');
+					parse_def.push(indent4 + 'for (cgltf_size k = 0; k < out_data->' + name + '_count; k++) {');
 					parse_def.push(indent5 + 'i = cgltf_parse_json_' + member_func + '(options, tokens, i, json_chunk, out_data->' + name + ' + k);');
 					parse_def.push(indent4 + '}');
 
@@ -356,9 +356,9 @@ fs.readdir(basepath, (err, files) => {
 
 	typesStream.write(fs.readFileSync(path.join(__dirname, 'vrm_types_footer.txt'), 'utf8'));
 
-	typesStream.close();
-	typesImplStream.close();
-	writeImplStream.close();
+	typesStream.end();
+	typesImplStream.end();
+	writeImplStream.end();
 });
 
 /* vrm_type_generator is distributed under MIT license:
