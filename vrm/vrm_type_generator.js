@@ -65,6 +65,7 @@ function parse(json, file, rootType, subType) {
 	let dependencies_def = [];
 	let free_def = [];
 	let enum_selector_def = [];
+	let enum_to_str_def = [];
 	let parse_def = [];
 	let write_def = [];
 
@@ -94,6 +95,9 @@ function parse(json, file, rootType, subType) {
 				enums_def.push('typedef enum ' + enumname + ' {');
 				enum_selector_def.push('static cgltf_bool select_' + enumname + '(const char* name, ' + enumname + '* out) {');
 
+				enum_to_str_def.push('static char* ' + enumname + '_to_str(const ' + enumname + ' in) {');
+				enum_to_str_def.push(indent1 + 'switch (in) {');	
+
 				enum_selector_def.push(indent1 + 'if (strlen(name) == 0) {');
 				enum_selector_def.push(indent2 + 'return 0;');
 				enums.forEach(value => {
@@ -102,23 +106,29 @@ function parse(json, file, rootType, subType) {
 					enum_selector_def.push(indent1 + '} else if (strncmp(name, "' + value + '", ' + value.length + ') == 0) {');
 					enum_selector_def.push(indent2 + '*out = ' + enumvalue + ';');
 					enum_selector_def.push(indent2 + 'return 1;');
+
+					enum_to_str_def.push(indent2 + 'case ' + enumvalue + ': return "' + value + '";');
 				});
 				enum_selector_def.push(indent1 + '}');
 				enum_selector_def.push(indent1 + 'return 0;');
 
-				enums_def.push('} ' + enumname + ';')
-				enums_def.push('');
-				enum_selector_def.push('}');
-				enum_selector_def.push('');
+				enums_def.push('} ' + enumname + ';\n')
+				enum_selector_def.push('}\n');
+
+				enum_to_str_def.push(indent2 + 'default: return "";');	
+				enum_to_str_def.push(indent1 + '}');	
+				enum_to_str_def.push('}\n');
 
 				structs_def.push(indent1 + enumname + ' ' + name + ';');
 				parse_def.push(indent4 + 'char* enum_key = NULL; i = cgltf_parse_json_string(options, tokens, i + 1, json_chunk, &enum_key);');
 				parse_def.push(indent4 + 'i = select_' + enumname + '(enum_key, &out_data->' + name + ') ? i : -1;');
+
+				write_def.push(indent1 + 'cgltf_write_strprop(context, "' + name + '", ' + enumname + '_to_str(data->' + name + '));');
 			} else {
 				structs_def.push(indent1 + 'char* ' + name + ';');
 				free_def.push(indent1 + 'memory->free(memory->user_data, data->' + name + ');');
 				parse_def.push(indent4 + 'i = cgltf_parse_json_string(options, tokens, i + 1, json_chunk, &out_data->' + name + ');');
-				write_def.push(indent1 + selectWriteFunc(type) + '(context, "' + name + '", data->' + name + ');');
+				write_def.push(indent1 + 'cgltf_write_strprop(context, "' + name + '", data->' + name + ');');
 			}
 		} else if (primitive) {
 			structs_def.push(indent1 + primitive + ' ' + name + ';');
@@ -291,7 +301,8 @@ function parse(json, file, rootType, subType) {
 	write_def.push('}');
 
 	return {enums:enums_def, structs:structs_def, dependencies:dependencies_def,
-			 free: free_def, enum_selector:enum_selector_def, parse: parse_def, write: write_def};
+			 free: free_def, enum_selector:enum_selector_def, enum_to_str:enum_to_str_def,
+			 parse: parse_def, write: write_def};
 }
 
 fs.readdir(basepath, (err, files) => {
@@ -308,6 +319,7 @@ fs.readdir(basepath, (err, files) => {
 	let dependencies_def = [];
 	let free_def = [];
 	let enum_selector_def = [];
+	let enum_to_str_def = [];
 	let parse_def = [];
 	let write_def = [];
 
@@ -320,6 +332,7 @@ fs.readdir(basepath, (err, files) => {
 		if (defs.structs) structs_def = structs_def.concat(defs.structs);
 		if (defs.free) free_def = free_def.concat(defs.free);
 		if (defs.enum_selector) enum_selector_def = enum_selector_def.concat(defs.enum_selector);
+		if (defs.enum_to_str) enum_to_str_def = enum_to_str_def.concat(defs.enum_to_str);
 		if (defs.parse) parse_def = parse_def.concat(defs.parse);
 		if (defs.write) write_def = write_def.concat(defs.write);
 	});
@@ -330,12 +343,14 @@ fs.readdir(basepath, (err, files) => {
 		typesStream.write(deps.structs.join('\n'));
 		if (deps.free) free_def = deps.free.concat(free_def);
 		if (deps.enum_selector) enum_selector_def = enum_selector_def.concat(deps.enum_selector);
+		if (deps.enum_to_str) enum_to_str_def = enum_to_str_def.concat(deps.enum_to_str);
 		if (deps.parse) parse_def = deps.parse.concat(parse_def);
 		if (deps.write) write_def = deps.write.concat(write_def);
 	});
 	typesStream.write(structs_def.join('\n'));
 	typesImplStream.write(free_def.join('\n'));
 	typesImplStream.write(enum_selector_def.join('\n'));
+	typesImplStream.write(enum_to_str_def.join('\n'));
 	typesImplStream.write(parse_def.join('\n'));
 	writeImplStream.write(write_def.join('\n'));
 

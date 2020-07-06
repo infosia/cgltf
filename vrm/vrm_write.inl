@@ -62,6 +62,7 @@ static void cgltf_write_vrm_blendshape_materialbind(cgltf_write_context* context
 static void cgltf_write_vrm_blendshape_group(cgltf_write_context* context, const cgltf_vrm_blendshape_group* data) {
 	cgltf_write_line(context, "{");
 	cgltf_write_strprop(context, "name", data->name);
+	cgltf_write_strprop(context, "presetName", cgltf_vrm_blendshape_group_presetName_to_str(data->presetName));
 	cgltf_write_line(context, "\"binds\": [");
 	for (cgltf_size i = 0; i < data->binds_count; ++i) {
 		cgltf_write_vrm_blendshape_bind(context, data->binds + i);
@@ -108,6 +109,7 @@ static void cgltf_write_vrm_firstperson(cgltf_write_context* context, const cglt
 		cgltf_write_vrm_firstperson_meshannotation(context, data->meshAnnotations + i);
 	}
 	cgltf_write_line(context, "]");
+	cgltf_write_strprop(context, "lookAtTypeName", cgltf_vrm_firstperson_lookAtTypeName_to_str(data->lookAtTypeName));
 	cgltf_write_line(context, "\"lookAtHorizontalInner\": ");
 	cgltf_write_vrm_firstperson_degreemap(context, &data->lookAtHorizontalInner);
 	cgltf_write_line(context, "\"lookAtHorizontalOuter\": ");
@@ -120,6 +122,7 @@ static void cgltf_write_vrm_firstperson(cgltf_write_context* context, const cglt
 }
 static void cgltf_write_vrm_humanoid_bone(cgltf_write_context* context, const cgltf_vrm_humanoid_bone* data) {
 	cgltf_write_line(context, "{");
+	cgltf_write_strprop(context, "bone", cgltf_vrm_humanoid_bone_bone_to_str(data->bone));
 	cgltf_write_intprop(context, "node", data->node, 0);
 	cgltf_write_boolprop_optional(context, "useDefaultValues", data->useDefaultValues, 0);
 	if (data->min_count > 0) {
@@ -166,7 +169,12 @@ static void cgltf_write_vrm_meta(cgltf_write_context* context, const cgltf_vrm_m
 	cgltf_write_strprop(context, "contactInformation", data->contactInformation);
 	cgltf_write_strprop(context, "reference", data->reference);
 	cgltf_write_intprop(context, "texture", data->texture, 0);
+	cgltf_write_strprop(context, "allowedUserName", cgltf_vrm_meta_allowedUserName_to_str(data->allowedUserName));
+	cgltf_write_strprop(context, "violentUssageName", cgltf_vrm_meta_violentUssageName_to_str(data->violentUssageName));
+	cgltf_write_strprop(context, "sexualUssageName", cgltf_vrm_meta_sexualUssageName_to_str(data->sexualUssageName));
+	cgltf_write_strprop(context, "commercialUssageName", cgltf_vrm_meta_commercialUssageName_to_str(data->commercialUssageName));
 	cgltf_write_strprop(context, "otherPermissionUrl", data->otherPermissionUrl);
+	cgltf_write_strprop(context, "licenseName", cgltf_vrm_meta_licenseName_to_str(data->licenseName));
 	cgltf_write_strprop(context, "otherLicenseUrl", data->otherLicenseUrl);
 	cgltf_write_line(context, "}");
 }
