@@ -35,21 +35,42 @@ int main(int argc, char** argv)
 	result = cgltf_parse_file(&options, "out.gltf", &data1);
 	if (result != cgltf_result_success)
 	{
-		printf("[FAILED] failed to parse written file\n");
+		printf("[FAILED] failed to parse out.gltf\n");
 		return result;
 	}
-	if (data0->vrm.humanoid.humanBones_count != data1->vrm.humanoid.humanBones_count) {
-		printf("[FAILED] failed to test vrm humanBones\n");
+
+	if (strncmp(data0->vrm.exporterVersion, data1->vrm.exporterVersion , strlen(data0->vrm.exporterVersion)) != 0) {
+		printf("[FAILED] failed to test vrm exporterVersion: %s, actual %s\n", data0->vrm.exporterVersion, data1->vrm.exporterVersion);
 		return -1;
 	}
 
-	if (data0->vrm.humanoid.humanBones_count != data1->vrm.humanoid.humanBones_count) {
-		printf("[FAILED] failed to test vrm humanBones\n");
+	if (strncmp(data0->vrm.meta.title, data1->vrm.meta.title , strlen(data0->vrm.meta.title)) != 0) {
+		printf("[FAILED] failed to test vrm meta.title: %s, actual %s\n", data0->vrm.meta.title, data1->vrm.meta.title);
 		return -1;
 	}
 
-	if (data0->vrm.materialProperties_count != data1->vrm.materialProperties_count) {
-		printf("[FAILED] failed to test vrm materialProperties\n expected: %zd, actual %zd", data0->vrm.materialProperties_count, data1->vrm.materialProperties_count);
+	if (data1->vrm.humanoid.humanBones_count == 0 || data0->vrm.humanoid.humanBones_count != data1->vrm.humanoid.humanBones_count) {
+		printf("[FAILED] failed to test vrm humanoid.humanBones_count expected: %zd, actual %zd\n", data0->vrm.humanoid.humanBones_count, data1->vrm.humanoid.humanBones_count);
+		return -1;
+	}
+
+	if (data0->vrm.firstPerson.firstPersonBone != data1->vrm.firstPerson.firstPersonBone) {
+		printf("[FAILED] failed to test vrm firstPerson.firstPersonBone expected: %d, actual %d\n", data0->vrm.firstPerson.firstPersonBone, data1->vrm.firstPerson.firstPersonBone);
+		return -1;
+	}
+
+	if (data1->vrm.blendShapeMaster.blendShapeGroups_count == 0 || data0->vrm.blendShapeMaster.blendShapeGroups_count != data1->vrm.blendShapeMaster.blendShapeGroups_count) {
+		printf("[FAILED] failed to test vrm blendShapeMaster.blendShapeGroups_count expected: %zd, actual %zd\n", data0->vrm.blendShapeMaster.blendShapeGroups_count, data1->vrm.blendShapeMaster.blendShapeGroups_count);
+		return -1;
+	}
+
+	if (data1->vrm.secondaryAnimation.boneGroups_count == 0 || data0->vrm.secondaryAnimation.boneGroups_count != data1->vrm.secondaryAnimation.boneGroups_count) {
+		printf("[FAILED] failed to test vrm secondaryAnimation.boneGroups_count expected: %zd, actual %zd\n", data0->vrm.secondaryAnimation.boneGroups_count, data1->vrm.secondaryAnimation.boneGroups_count);
+		return -1;
+	}
+
+	if (data1->vrm.materialProperties_count == 0 || data0->vrm.materialProperties_count != data1->vrm.materialProperties_count) {
+		printf("[FAILED] failed to test vrm materialProperties expected: %zd, actual %zd\n", data0->vrm.materialProperties_count, data1->vrm.materialProperties_count);
 		return -1;
 	}
 
