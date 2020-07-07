@@ -17,6 +17,7 @@ int main(int argc, char** argv)
 	if (argc < 2)
 	{
 		printf("[FAILED] too few arguments\n");
+		printf("[INFO] Usage: test_write input.vrm\n");
 		return -1;
 	}
 
