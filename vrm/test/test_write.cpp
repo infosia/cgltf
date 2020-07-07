@@ -7,9 +7,14 @@
 #include <cstdio>
 #include <limits>
 
+static void concat(char* dest, const char* base, const char* str) {
+	strcpy(dest, base);
+	strcat(dest + strlen(base), str);
+}
+
 int main(int argc, char** argv)
 {
-	if (argc < 3)
+	if (argc < 2)
 	{
 		printf("[FAILED] too few arguments\n");
 		return -1;
@@ -25,19 +30,36 @@ int main(int argc, char** argv)
 		return cgltf_result_success;
 	}
 
-	result = cgltf_write_file(&options, argv[2], data0);
+	const char* in_suffix = ".in.json";
+	cgltf_size in_json_size = strlen(argv[1]) + strlen(in_suffix) + 1;;
+	char* in_json = (char*)CGLTF_MALLOC(in_json_size);
+	concat(in_json, argv[1], in_suffix);
+	result = cgltf_write_json(&options, in_json, data0);
 	if (result != cgltf_result_success)
 	{
-		printf("[FAILED] failed to write file\n");
+		printf("[FAILED] failed to write json %s\n", in_json);
+		return result;
+	}
+	CGLTF_FREE(in_json);
+
+	const char* out_suffix = ".out.json";
+	cgltf_size out_json_size = strlen(argv[1]) + strlen(out_suffix) + 1;;
+	char* out_json = (char*)CGLTF_MALLOC(out_json_size);
+	concat(out_json, argv[1], out_suffix);
+	result = cgltf_write_file(&options, out_json, data0);
+	if (result != cgltf_result_success)
+	{
+		printf("[FAILED] failed to write file %s\n", out_json);
 		return result;
 	}
 	cgltf_data* data1 = NULL;
-	result = cgltf_parse_file(&options, argv[2], &data1);
+	result = cgltf_parse_file(&options, out_json, &data1);
 	if (result != cgltf_result_success)
 	{
-		printf("[FAILED] failed to parse %s\n", argv[2]);
+		printf("[FAILED] failed to parse %s\n", out_json);
 		return result;
 	}
+	CGLTF_FREE(out_json);
 
 	if (data0->vrm.exporterVersion && strncmp(data0->vrm.exporterVersion, data1->vrm.exporterVersion , strlen(data0->vrm.exporterVersion)) != 0) {
 		printf("[FAILED] failed to test vrm exporterVersion: %s, actual %s\n", data0->vrm.exporterVersion, data1->vrm.exporterVersion);

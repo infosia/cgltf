@@ -3,8 +3,16 @@
 const fs = require('fs');
 const path = require('path');
 
-const before = JSON.parse(fs.readFileSync(path.join(__dirname, 'test01.json'), 'utf8'));
-const after  = JSON.parse(fs.readFileSync(path.join(__dirname, 'test01.gltf'), 'utf8'));
+if (process.argv.length < 4) {
+	console.log('[FAILED] Too few arguments');
+	console.log('Usage: node vrm_format_check.js in.json out.json');
+	return;
+}
+
+var args = process.argv.slice(2);
+
+const before = JSON.parse(fs.readFileSync(path.join(__dirname, args[0]), 'utf8'));
+const after  = JSON.parse(fs.readFileSync(path.join(__dirname, args[1]), 'utf8'));
 
 let count = 0, failed = 0;
 
@@ -39,4 +47,4 @@ var traverse = function(o1, o2, fn) {
 traverse(before.extensions.VRM, after.extensions.VRM);
 
 console.log('----------');
-console.log(count + ' checked, ' + failed + ' errors');
+console.log((failed == 0 ? '[OK] ' : '[FAILED] ') + count + ' checked, ' + failed + ' errors');

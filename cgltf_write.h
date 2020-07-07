@@ -910,6 +910,19 @@ static void cgltf_write_light(cgltf_write_context* context, const cgltf_light* l
 	cgltf_write_line(context, "}");
 }
 
+cgltf_result cgltf_write_json(const cgltf_options* options, const char* path, const cgltf_data* data)
+{
+	(void)options;
+	FILE* file = fopen(path, "wt");
+	if (!file)
+	{
+		return cgltf_result_file_not_found;
+	}
+	fwrite(data->json, data->json_size, 1, file);
+	fclose(file);
+	return cgltf_result_success;
+}
+
 cgltf_result cgltf_write_file(const cgltf_options* options, const char* path, const cgltf_data* data)
 {
 	cgltf_size expected = cgltf_write(options, NULL, 0, data);
