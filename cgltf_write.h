@@ -188,9 +188,9 @@ static void cgltf_write_strprop(cgltf_write_context* context, const char* label,
 static void cgltf_write_extras(cgltf_write_context* context, const cgltf_extras* extras)
 {
 	cgltf_size length = extras->end_offset - extras->start_offset;
-	if (length > 0 && context->data->file_data)
+	if (length > 0 && context->data->json)
 	{
-		char* json_string = ((char*) context->data->file_data) + extras->start_offset;
+		char* json_string = ((char*) context->data->json) + extras->start_offset;
 		cgltf_write_indent(context);
 		CGLTF_SPRINTF("%s", "\"extras\": ");
 		CGLTF_SNPRINTF(length, "%s", json_string);

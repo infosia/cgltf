@@ -9,7 +9,7 @@
 
 int main(int argc, char** argv)
 {
-	if (argc < 2)
+	if (argc < 3)
 	{
 		printf("[FAILED] too few arguments\n");
 		return -1;
@@ -25,26 +25,26 @@ int main(int argc, char** argv)
 		return cgltf_result_success;
 	}
 
-	result = cgltf_write_file(&options, "out.gltf", data0);
+	result = cgltf_write_file(&options, argv[2], data0);
 	if (result != cgltf_result_success)
 	{
 		printf("[FAILED] failed to write file\n");
 		return result;
 	}
 	cgltf_data* data1 = NULL;
-	result = cgltf_parse_file(&options, "out.gltf", &data1);
+	result = cgltf_parse_file(&options, argv[2], &data1);
 	if (result != cgltf_result_success)
 	{
-		printf("[FAILED] failed to parse out.gltf\n");
+		printf("[FAILED] failed to parse %s\n", argv[2]);
 		return result;
 	}
 
-	if (strncmp(data0->vrm.exporterVersion, data1->vrm.exporterVersion , strlen(data0->vrm.exporterVersion)) != 0) {
+	if (data0->vrm.exporterVersion && strncmp(data0->vrm.exporterVersion, data1->vrm.exporterVersion , strlen(data0->vrm.exporterVersion)) != 0) {
 		printf("[FAILED] failed to test vrm exporterVersion: %s, actual %s\n", data0->vrm.exporterVersion, data1->vrm.exporterVersion);
 		return -1;
 	}
 
-	if (strncmp(data0->vrm.meta.title, data1->vrm.meta.title , strlen(data0->vrm.meta.title)) != 0) {
+	if (data0->vrm.meta.title && strncmp(data0->vrm.meta.title, data1->vrm.meta.title , strlen(data0->vrm.meta.title)) != 0) {
 		printf("[FAILED] failed to test vrm meta.title: %s, actual %s\n", data0->vrm.meta.title, data1->vrm.meta.title);
 		return -1;
 	}
@@ -59,12 +59,12 @@ int main(int argc, char** argv)
 		return -1;
 	}
 
-	if (data1->vrm.blendShapeMaster.blendShapeGroups_count == 0 || data0->vrm.blendShapeMaster.blendShapeGroups_count != data1->vrm.blendShapeMaster.blendShapeGroups_count) {
+	if (data0->vrm.blendShapeMaster.blendShapeGroups_count != data1->vrm.blendShapeMaster.blendShapeGroups_count) {
 		printf("[FAILED] failed to test vrm blendShapeMaster.blendShapeGroups_count expected: %zd, actual %zd\n", data0->vrm.blendShapeMaster.blendShapeGroups_count, data1->vrm.blendShapeMaster.blendShapeGroups_count);
 		return -1;
 	}
 
-	if (data1->vrm.secondaryAnimation.boneGroups_count == 0 || data0->vrm.secondaryAnimation.boneGroups_count != data1->vrm.secondaryAnimation.boneGroups_count) {
+	if (data0->vrm.secondaryAnimation.boneGroups_count != data1->vrm.secondaryAnimation.boneGroups_count) {
 		printf("[FAILED] failed to test vrm secondaryAnimation.boneGroups_count expected: %zd, actual %zd\n", data0->vrm.secondaryAnimation.boneGroups_count, data1->vrm.secondaryAnimation.boneGroups_count);
 		return -1;
 	}
