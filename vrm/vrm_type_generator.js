@@ -103,7 +103,7 @@ function parse(json, file, rootType, subType) {
 				enums.forEach(value => {
 					const enumvalue = enumname + '_' + value;
 					enums_def.push(indent1 + enumvalue + ',');
-					enum_selector_def.push(indent1 + '} else if (strncmp(name, "' + value + '", ' + value.length + ') == 0) {');
+					enum_selector_def.push(indent1 + '} else if (strlen(name) == ' + value.length + ' && strncmp(name, "' + value + '", ' + value.length + ') == 0) {');
 					enum_selector_def.push(indent2 + '*out = ' + enumvalue + ';');
 					enum_selector_def.push(indent2 + 'return 1;');
 
