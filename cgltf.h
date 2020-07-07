@@ -2293,17 +2293,20 @@ static int cgltf_parse_json_vec3(cgltf_options* options, jsmntok_t const* tokens
 				++count;
 			}
 			else if (cgltf_json_strcmp(tokens + i, json_chunk, "y") == 0) {
-				++i; (*out_array)[0] = cgltf_json_to_float(tokens + i, json_chunk); ++i;
+				++i; (*out_array)[1] = cgltf_json_to_float(tokens + i, json_chunk); ++i;
 				++count;
 			}
 			else if (cgltf_json_strcmp(tokens + i, json_chunk, "z") == 0) {
-				++i; (*out_array)[1] = cgltf_json_to_float(tokens + i, json_chunk); ++i;
+				++i; (*out_array)[2] = cgltf_json_to_float(tokens + i, json_chunk); ++i;
 				++count;
 			}
 			else {
 				i = cgltf_skip_json(tokens, i + 1);
 			}
 			if (i < 0) return i;
+		}
+		if (count < 3) {
+			return CGLTF_ERROR_JSON;
 		}
 		*out_size = count;
 	}
