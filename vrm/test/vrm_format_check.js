@@ -6,7 +6,7 @@ const path = require('path');
 const before = JSON.parse(fs.readFileSync(path.join(__dirname, 'test01.json'), 'utf8'));
 const after  = JSON.parse(fs.readFileSync(path.join(__dirname, 'test01.gltf'), 'utf8'));
 
-let count = 0;
+let count = 0, failed = 0;
 
 function almostEquals(a, b) {
 	if (a === b) return true;
@@ -20,8 +20,9 @@ var traverse = function(o1, o2, fn) {
 	for (var i in o1) {
 		let type = typeof(o1[i]);
 		if (type != 'object') {
+			count++;
 			if (type == 'number' ? !almostEquals(o1[i], o2[i]) : (o1[i] != o2[i])) {
-				count++;
+				failed++;
 				console.log('----------');
 				console.log('Checking ' + JSON.stringify(o1) + ' => ' + JSON.stringify(o2));
 				console.log('Expected: ' + JSON.stringify(o1[i]));
@@ -38,4 +39,4 @@ var traverse = function(o1, o2, fn) {
 traverse(before.extensions.VRM, after.extensions.VRM);
 
 console.log('----------');
-console.log(count + ' errors');
+console.log(count + ' checked, ' + failed + ' errors');
