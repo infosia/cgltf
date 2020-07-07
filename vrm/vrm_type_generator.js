@@ -42,9 +42,9 @@ function selectPrimitiveParser(type) {
 
 function selectWriteFunc(type) {
 	if (type == 'string') return 'cgltf_write_strprop';
-	if (type == 'integer' || type == 'cgltf_int')    return 'cgltf_write_intprop';
-	if (type == 'number'  || type == 'cgltf_float')  return 'cgltf_write_floatprop';
-	if (type == 'boolean' || type == 'cgltf_bool')   return 'cgltf_write_boolprop_optional';
+	if (type == 'integer' || type == 'cgltf_int')    return 'cgltf_write_intprop_strict';
+	if (type == 'number'  || type == 'cgltf_float')  return 'cgltf_write_floatprop_strict';
+	if (type == 'boolean' || type == 'cgltf_bool')   return 'cgltf_write_boolprop_strict';
 	return type;
 }
 
@@ -139,7 +139,7 @@ function parse(json, file, rootType, subType) {
 			} else {
 				throw new Error('Unknown type: ' + type + ' for ' + name + ' in ' + file);
 			}
-			write_def.push(indent1 + selectWriteFunc(type) + '(context, "' + name + '", data->' + name + ', 0);');
+			write_def.push(indent1 + selectWriteFunc(type) + '(context, "' + name + '", data->' + name + ');');
 		} else if (type == 'object') {
 			parse_def.push(indent3 + '} else if (cgltf_json_strcmp(tokens + i, json_chunk, "' + name + '") == 0) {');
 
@@ -149,7 +149,12 @@ function parse(json, file, rootType, subType) {
 				free_def.push(indent1 + 'memory->free(memory->user_data, data->' + name + ');');
 				parse_def.push(indent4 + 'i = cgltf_parse_json_vec3(options, tokens, i + 1, json_chunk, &out_data->' + name + ', &out_data->' + name + '_count);');
 				write_def.push(indent1 + 'if (data->' + name + '_count > 0) {');
-				write_def.push(indent2 + 'cgltf_write_floatarrayprop(context, "' + name + '", data->' + name + ', 3);');
+
+				write_def.push(indent2 + 'cgltf_write_line(context, "\\"' + name + '\\": {");');
+				write_def.push(indent2 + 'cgltf_write_floatprop_strict(context, "x", data->' + name + '[0]);');
+				write_def.push(indent2 + 'cgltf_write_floatprop_strict(context, "y", data->' + name + '[1]);');
+				write_def.push(indent2 + 'cgltf_write_floatprop_strict(context, "z", data->' + name + '[2]);');
+				write_def.push(indent2 + 'cgltf_write_line(context, "}");');
 				write_def.push(indent1 + '}');
 			} else if (name == 'floatProperties' || name == 'textureProperties' || name == 'keywordMap') {
 				const property_type = selectType(name);
@@ -168,7 +173,7 @@ function parse(json, file, rootType, subType) {
 
 				write_def.push(indent1 + 'cgltf_write_line(context, "\\"' + name + '\\": {");');
 				write_def.push(indent1 + 'for (cgltf_size i = 0; i < data->' + name + '_count; i++) {');
-				write_def.push(indent2 + selectWriteFunc(property_type) + '(context, data->' + name + '_keys[i], data->' + name + '_values[i], 0);');
+				write_def.push(indent2 + selectWriteFunc(property_type) + '(context, data->' + name + '_keys[i], data->' + name + '_values[i]);');
 				write_def.push(indent1 + '}');
 				write_def.push(indent1 + 'cgltf_write_line(context, "}");');
 			} else if (name == 'vectorProperties' || name == 'tagMap') {

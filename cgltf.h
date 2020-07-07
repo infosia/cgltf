@@ -2308,7 +2308,7 @@ static int cgltf_parse_json_vec3(cgltf_options* options, jsmntok_t const* tokens
 		*out_size = count;
 	}
 	else {
-		i = cgltf_skip_json(tokens, i + 1);
+		return CGLTF_ERROR_JSON;
 	}
 	return i;
 }

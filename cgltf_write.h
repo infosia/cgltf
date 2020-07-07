@@ -245,6 +245,37 @@ static void cgltf_write_boolprop_optional(cgltf_write_context* context, const ch
 	}
 }
 
+static void cgltf_write_intprop_strict(cgltf_write_context* context, const char* label, int val)
+{
+	cgltf_write_indent(context);
+	CGLTF_SPRINTF("\"%s\": %d", label, val);
+	context->needs_comma = 1;
+}
+
+static void cgltf_write_floatprop_strict(cgltf_write_context* context, const char* label, float val)
+{
+	cgltf_write_indent(context);
+	CGLTF_SPRINTF("\"%s\": ", label);
+	CGLTF_SPRINTF("%g", val);
+	context->needs_comma = 1;
+
+	if (context->cursor)
+	{
+		char *decimal_comma = strchr(context->cursor - context->tmp, ',');
+		if (decimal_comma)
+		{
+			*decimal_comma = '.';
+		}
+	}
+}
+
+static void cgltf_write_boolprop_strict(cgltf_write_context* context, const char* label, bool val)
+{
+	cgltf_write_indent(context);
+	CGLTF_SPRINTF("\"%s\": %s", label, val ? "true" : "false");
+	context->needs_comma = 1;
+}
+
 static void cgltf_write_intarrayprop(cgltf_write_context* context, const char* label, const cgltf_int* vals, cgltf_size dim)
 {
 	cgltf_write_indent(context);

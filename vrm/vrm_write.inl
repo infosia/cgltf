@@ -141,29 +141,37 @@ static const char* cgltf_vrm_meta_licenseName_to_str(const cgltf_vrm_meta_licens
 static void cgltf_write_vrm_secondaryanimation_collidergroup_colliders(cgltf_write_context* context, const cgltf_vrm_secondaryanimation_collidergroup_colliders* data) {
 	cgltf_write_line(context, "{");
 	if (data->offset_count > 0) {
-		cgltf_write_floatarrayprop(context, "offset", data->offset, 3);
+		cgltf_write_line(context, "\"offset\": {");
+		cgltf_write_floatprop_strict(context, "x", data->offset[0]);
+		cgltf_write_floatprop_strict(context, "y", data->offset[1]);
+		cgltf_write_floatprop_strict(context, "z", data->offset[2]);
+		cgltf_write_line(context, "}");
 	}
-	cgltf_write_floatprop(context, "radius", data->radius, 0);
+	cgltf_write_floatprop_strict(context, "radius", data->radius);
 	cgltf_write_line(context, "}");
 }
 static void cgltf_write_vrm_secondaryanimation_spring(cgltf_write_context* context, const cgltf_vrm_secondaryanimation_spring* data) {
 	cgltf_write_line(context, "{");
 	cgltf_write_strprop(context, "comment", data->comment);
-	cgltf_write_floatprop(context, "stiffiness", data->stiffiness, 0);
-	cgltf_write_floatprop(context, "gravityPower", data->gravityPower, 0);
+	cgltf_write_floatprop_strict(context, "stiffiness", data->stiffiness);
+	cgltf_write_floatprop_strict(context, "gravityPower", data->gravityPower);
 	if (data->gravityDir_count > 0) {
-		cgltf_write_floatarrayprop(context, "gravityDir", data->gravityDir, 3);
+		cgltf_write_line(context, "\"gravityDir\": {");
+		cgltf_write_floatprop_strict(context, "x", data->gravityDir[0]);
+		cgltf_write_floatprop_strict(context, "y", data->gravityDir[1]);
+		cgltf_write_floatprop_strict(context, "z", data->gravityDir[2]);
+		cgltf_write_line(context, "}");
 	}
-	cgltf_write_floatprop(context, "dragForce", data->dragForce, 0);
-	cgltf_write_intprop(context, "center", data->center, 0);
-	cgltf_write_floatprop(context, "hitRadius", data->hitRadius, 0);
+	cgltf_write_floatprop_strict(context, "dragForce", data->dragForce);
+	cgltf_write_intprop_strict(context, "center", data->center);
+	cgltf_write_floatprop_strict(context, "hitRadius", data->hitRadius);
 	cgltf_write_intarrayprop(context, "bones", data->bones, data->bones_count);
 	cgltf_write_intarrayprop(context, "colliderGroups", data->colliderGroups, data->colliderGroups_count);
 	cgltf_write_line(context, "}");
 }
 static void cgltf_write_vrm_secondaryanimation_collidergroup(cgltf_write_context* context, const cgltf_vrm_secondaryanimation_collidergroup* data) {
 	cgltf_write_line(context, "{");
-	cgltf_write_intprop(context, "node", data->node, 0);
+	cgltf_write_intprop_strict(context, "node", data->node);
 	cgltf_write_line(context, "\"colliders\": [");
 	for (cgltf_size i = 0; i < data->colliders_count; ++i) {
 		cgltf_write_vrm_secondaryanimation_collidergroup_colliders(context, data->colliders + i);
@@ -187,9 +195,9 @@ static void cgltf_write_vrm_secondaryanimation(cgltf_write_context* context, con
 }
 static void cgltf_write_vrm_blendshape_bind(cgltf_write_context* context, const cgltf_vrm_blendshape_bind* data) {
 	cgltf_write_line(context, "{");
-	cgltf_write_intprop(context, "mesh", data->mesh, 0);
-	cgltf_write_intprop(context, "index", data->index, 0);
-	cgltf_write_floatprop(context, "weight", data->weight, 0);
+	cgltf_write_intprop_strict(context, "mesh", data->mesh);
+	cgltf_write_intprop_strict(context, "index", data->index);
+	cgltf_write_floatprop_strict(context, "weight", data->weight);
 	cgltf_write_line(context, "}");
 }
 static void cgltf_write_vrm_blendshape_materialbind(cgltf_write_context* context, const cgltf_vrm_blendshape_materialbind* data) {
@@ -213,7 +221,7 @@ static void cgltf_write_vrm_blendshape_group(cgltf_write_context* context, const
 		cgltf_write_vrm_blendshape_materialbind(context, data->materialValues + i);
 	}
 	cgltf_write_line(context, "]");
-	cgltf_write_boolprop_optional(context, "isBinary", data->isBinary, 0);
+	cgltf_write_boolprop_strict(context, "isBinary", data->isBinary);
 	cgltf_write_line(context, "}");
 }
 static void cgltf_write_vrm_blendshape(cgltf_write_context* context, const cgltf_vrm_blendshape* data) {
@@ -228,21 +236,25 @@ static void cgltf_write_vrm_blendshape(cgltf_write_context* context, const cgltf
 static void cgltf_write_vrm_firstperson_degreemap(cgltf_write_context* context, const cgltf_vrm_firstperson_degreemap* data) {
 	cgltf_write_line(context, "{");
 	cgltf_write_floatarrayprop(context, "curve", data->curve, data->curve_count);
-	cgltf_write_floatprop(context, "xRange", data->xRange, 0);
-	cgltf_write_floatprop(context, "yRange", data->yRange, 0);
+	cgltf_write_floatprop_strict(context, "xRange", data->xRange);
+	cgltf_write_floatprop_strict(context, "yRange", data->yRange);
 	cgltf_write_line(context, "}");
 }
 static void cgltf_write_vrm_firstperson_meshannotation(cgltf_write_context* context, const cgltf_vrm_firstperson_meshannotation* data) {
 	cgltf_write_line(context, "{");
-	cgltf_write_intprop(context, "mesh", data->mesh, 0);
+	cgltf_write_intprop_strict(context, "mesh", data->mesh);
 	cgltf_write_strprop(context, "firstPersonFlag", data->firstPersonFlag);
 	cgltf_write_line(context, "}");
 }
 static void cgltf_write_vrm_firstperson(cgltf_write_context* context, const cgltf_vrm_firstperson* data) {
 	cgltf_write_line(context, "{");
-	cgltf_write_intprop(context, "firstPersonBone", data->firstPersonBone, 0);
+	cgltf_write_intprop_strict(context, "firstPersonBone", data->firstPersonBone);
 	if (data->firstPersonBoneOffset_count > 0) {
-		cgltf_write_floatarrayprop(context, "firstPersonBoneOffset", data->firstPersonBoneOffset, 3);
+		cgltf_write_line(context, "\"firstPersonBoneOffset\": {");
+		cgltf_write_floatprop_strict(context, "x", data->firstPersonBoneOffset[0]);
+		cgltf_write_floatprop_strict(context, "y", data->firstPersonBoneOffset[1]);
+		cgltf_write_floatprop_strict(context, "z", data->firstPersonBoneOffset[2]);
+		cgltf_write_line(context, "}");
 	}
 	cgltf_write_line(context, "\"meshAnnotations\": [");
 	for (cgltf_size i = 0; i < data->meshAnnotations_count; ++i) {
@@ -263,18 +275,30 @@ static void cgltf_write_vrm_firstperson(cgltf_write_context* context, const cglt
 static void cgltf_write_vrm_humanoid_bone(cgltf_write_context* context, const cgltf_vrm_humanoid_bone* data) {
 	cgltf_write_line(context, "{");
 	cgltf_write_strprop(context, "bone", cgltf_vrm_humanoid_bone_bone_to_str(data->bone));
-	cgltf_write_intprop(context, "node", data->node, 0);
-	cgltf_write_boolprop_optional(context, "useDefaultValues", data->useDefaultValues, 0);
+	cgltf_write_intprop_strict(context, "node", data->node);
+	cgltf_write_boolprop_strict(context, "useDefaultValues", data->useDefaultValues);
 	if (data->min_count > 0) {
-		cgltf_write_floatarrayprop(context, "min", data->min, 3);
+		cgltf_write_line(context, "\"min\": {");
+		cgltf_write_floatprop_strict(context, "x", data->min[0]);
+		cgltf_write_floatprop_strict(context, "y", data->min[1]);
+		cgltf_write_floatprop_strict(context, "z", data->min[2]);
+		cgltf_write_line(context, "}");
 	}
 	if (data->max_count > 0) {
-		cgltf_write_floatarrayprop(context, "max", data->max, 3);
+		cgltf_write_line(context, "\"max\": {");
+		cgltf_write_floatprop_strict(context, "x", data->max[0]);
+		cgltf_write_floatprop_strict(context, "y", data->max[1]);
+		cgltf_write_floatprop_strict(context, "z", data->max[2]);
+		cgltf_write_line(context, "}");
 	}
 	if (data->center_count > 0) {
-		cgltf_write_floatarrayprop(context, "center", data->center, 3);
+		cgltf_write_line(context, "\"center\": {");
+		cgltf_write_floatprop_strict(context, "x", data->center[0]);
+		cgltf_write_floatprop_strict(context, "y", data->center[1]);
+		cgltf_write_floatprop_strict(context, "z", data->center[2]);
+		cgltf_write_line(context, "}");
 	}
-	cgltf_write_floatprop(context, "axisLength", data->axisLength, 0);
+	cgltf_write_floatprop_strict(context, "axisLength", data->axisLength);
 	cgltf_write_line(context, "}");
 }
 static void cgltf_write_vrm_humanoid(cgltf_write_context* context, const cgltf_vrm_humanoid* data) {
@@ -284,24 +308,24 @@ static void cgltf_write_vrm_humanoid(cgltf_write_context* context, const cgltf_v
 		cgltf_write_vrm_humanoid_bone(context, data->humanBones + i);
 	}
 	cgltf_write_line(context, "]");
-	cgltf_write_floatprop(context, "armStretch", data->armStretch, 0);
-	cgltf_write_floatprop(context, "legStretch", data->legStretch, 0);
-	cgltf_write_floatprop(context, "upperArmTwist", data->upperArmTwist, 0);
-	cgltf_write_floatprop(context, "lowerArmTwist", data->lowerArmTwist, 0);
-	cgltf_write_floatprop(context, "upperLegTwist", data->upperLegTwist, 0);
-	cgltf_write_floatprop(context, "lowerLegTwist", data->lowerLegTwist, 0);
-	cgltf_write_floatprop(context, "feetSpacing", data->feetSpacing, 0);
-	cgltf_write_boolprop_optional(context, "hasTranslationDoF", data->hasTranslationDoF, 0);
+	cgltf_write_floatprop_strict(context, "armStretch", data->armStretch);
+	cgltf_write_floatprop_strict(context, "legStretch", data->legStretch);
+	cgltf_write_floatprop_strict(context, "upperArmTwist", data->upperArmTwist);
+	cgltf_write_floatprop_strict(context, "lowerArmTwist", data->lowerArmTwist);
+	cgltf_write_floatprop_strict(context, "upperLegTwist", data->upperLegTwist);
+	cgltf_write_floatprop_strict(context, "lowerLegTwist", data->lowerLegTwist);
+	cgltf_write_floatprop_strict(context, "feetSpacing", data->feetSpacing);
+	cgltf_write_boolprop_strict(context, "hasTranslationDoF", data->hasTranslationDoF);
 	cgltf_write_line(context, "}");
 }
 static void cgltf_write_vrm_material(cgltf_write_context* context, const cgltf_vrm_material* data) {
 	cgltf_write_line(context, "{");
 	cgltf_write_strprop(context, "name", data->name);
 	cgltf_write_strprop(context, "shader", data->shader);
-	cgltf_write_intprop(context, "renderQueue", data->renderQueue, 0);
+	cgltf_write_intprop_strict(context, "renderQueue", data->renderQueue);
 	cgltf_write_line(context, "\"floatProperties\": {");
 	for (cgltf_size i = 0; i < data->floatProperties_count; i++) {
-		cgltf_write_floatprop(context, data->floatProperties_keys[i], data->floatProperties_values[i], 0);
+		cgltf_write_floatprop_strict(context, data->floatProperties_keys[i], data->floatProperties_values[i]);
 	}
 	cgltf_write_line(context, "}");
 	cgltf_write_line(context, "\"vectorProperties\": {");
@@ -311,12 +335,12 @@ static void cgltf_write_vrm_material(cgltf_write_context* context, const cgltf_v
 	cgltf_write_line(context, "}");
 	cgltf_write_line(context, "\"textureProperties\": {");
 	for (cgltf_size i = 0; i < data->textureProperties_count; i++) {
-		cgltf_write_intprop(context, data->textureProperties_keys[i], data->textureProperties_values[i], 0);
+		cgltf_write_intprop_strict(context, data->textureProperties_keys[i], data->textureProperties_values[i]);
 	}
 	cgltf_write_line(context, "}");
 	cgltf_write_line(context, "\"keywordMap\": {");
 	for (cgltf_size i = 0; i < data->keywordMap_count; i++) {
-		cgltf_write_boolprop_optional(context, data->keywordMap_keys[i], data->keywordMap_values[i], 0);
+		cgltf_write_boolprop_strict(context, data->keywordMap_keys[i], data->keywordMap_values[i]);
 	}
 	cgltf_write_line(context, "}");
 	cgltf_write_line(context, "\"tagMap\": {");
@@ -333,7 +357,7 @@ static void cgltf_write_vrm_meta(cgltf_write_context* context, const cgltf_vrm_m
 	cgltf_write_strprop(context, "author", data->author);
 	cgltf_write_strprop(context, "contactInformation", data->contactInformation);
 	cgltf_write_strprop(context, "reference", data->reference);
-	cgltf_write_intprop(context, "texture", data->texture, 0);
+	cgltf_write_intprop_strict(context, "texture", data->texture);
 	cgltf_write_strprop(context, "allowedUserName", cgltf_vrm_meta_allowedUserName_to_str(data->allowedUserName));
 	cgltf_write_strprop(context, "violentUssageName", cgltf_vrm_meta_violentUssageName_to_str(data->violentUssageName));
 	cgltf_write_strprop(context, "sexualUssageName", cgltf_vrm_meta_sexualUssageName_to_str(data->sexualUssageName));
