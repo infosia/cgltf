@@ -27,7 +27,7 @@ int main(int argc, char** argv)
 
 	if (result != cgltf_result_success)
 	{
-		printf("[FAILED] failed to parse file\n");
+		printf("[FAILED] failed to parse file %s\n", argv[1]);
 		return cgltf_result_success;
 	}
 

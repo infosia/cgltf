@@ -18,8 +18,8 @@ if (process.argv.length < 4) {
 
 var args = process.argv.slice(2);
 
-const before = JSON.parse(fs.readFileSync(path.join(__dirname, args[0]), 'utf8'));
-const after  = JSON.parse(fs.readFileSync(path.join(__dirname, args[1]), 'utf8'));
+const before = JSON.parse(fs.readFileSync(args[0], 'utf8'));
+const after  = JSON.parse(fs.readFileSync(args[1], 'utf8'));
 
 let count = 0, failed = 0;
 
