@@ -998,7 +998,9 @@ static void cgltf_write_extensions(cgltf_write_context* context, uint32_t extens
 	}
 }
 
-#include "vrm/vrm_write.inl"
+#ifdef CGLTF_VRM_v0_0_IMPLEMENTATION
+#include "vrm/vrm_write.v0_0.inl"
+#endif
 
 cgltf_size cgltf_write(const cgltf_options* options, char* buffer, cgltf_size size, const cgltf_data* data)
 {
@@ -1170,10 +1172,10 @@ cgltf_size cgltf_write(const cgltf_options* options, char* buffer, cgltf_size si
 		cgltf_write_line(context, "}");
 	}
 
-	if (context->data->has_vrm || context->extension_flags != 0) {
+	if (context->data->has_vrm_v0_0 || context->extension_flags != 0) {
 		cgltf_write_line(context, "\"extensionsUsed\": [");
 		cgltf_write_extensions(context, context->extension_flags);
-		if (context->data->has_vrm) {
+		if (context->data->has_vrm_v0_0) {
 			cgltf_write_stritem(context, "VRM");
 		}
 		cgltf_write_line(context, "]");
@@ -1186,9 +1188,9 @@ cgltf_size cgltf_write(const cgltf_options* options, char* buffer, cgltf_size si
 	}
 
 	cgltf_write_line(context, "\"extensions\": {");
-	if (context->data->has_vrm) {
+	if (context->data->has_vrm_v0_0) {
 		cgltf_write_line(context, "\"VRM\": ");
-		cgltf_write_vrm(context, &context->data->vrm);
+		cgltf_write_vrm_v0_0(context, &context->data->vrm);
 	}
 	cgltf_write_line(context, "}");
 
