@@ -6,7 +6,7 @@
  */
 "use strict"
 
-const versions = ['0.0'];
+const supportedVersions = ['0.0'];
 
 const fs = require('fs');
 const path = require('path');
@@ -331,72 +331,70 @@ function parse(json, file, version, rootType, subType) {
 			 parse: parse_def, write: write_def};
 }
 
-fs.readdir(basepath, (err, schemes) => {
-	schemes.forEach(scheme_version => {
-		const scheme_dir = path.join(basepath, scheme_version);
-		fs.readdir(scheme_dir, (err, files) => {
-			if (err) throw err;
+supportedVersions.forEach(scheme_version => {
+	const scheme_dir = path.join(basepath, scheme_version);
+	fs.readdir(scheme_dir, (err, files) => {
+		if (err) throw err;
 
-			const suffix = 'v' + sanitizeVersion(scheme_version);
+		const suffix = 'v' + sanitizeVersion(scheme_version);
 
-			let typesStream = fs.createWriteStream(path.join(__dirname, 'vrm_types.' + suffix + '.h'), 'utf8');
-			let typesImplStream = fs.createWriteStream(path.join(__dirname, 'vrm_types.' + suffix + '.inl'), 'utf8');
-			let writeImplStream = fs.createWriteStream(path.join(__dirname, 'vrm_write.' + suffix + '.inl'), 'utf8');
+		let typesStream = fs.createWriteStream(path.join(__dirname, 'vrm_types.' + suffix + '.h'), 'utf8');
+		let typesImplStream = fs.createWriteStream(path.join(__dirname, 'vrm_types.' + suffix + '.inl'), 'utf8');
+		let writeImplStream = fs.createWriteStream(path.join(__dirname, 'vrm_write.' + suffix + '.inl'), 'utf8');
 
-			typesStream.write(fs.readFileSync(path.join(__dirname, 'vrm_types_header.txt'), 'utf8'));
+		typesStream.write(fs.readFileSync(path.join(__dirname, 'vrm_types_header.txt'), 'utf8'));
 
-			let structs_def = [];
-			let enums_def   = [];
-			let dependencies_def = [];
-			let free_def = [];
-			let enum_selector_def = [];
-			let enum_to_str_def = [];
-			let parse_def = [];
-			let write_def = [];
+		let structs_def = [];
+		let enums_def   = [];
+		let dependencies_def = [];
+		let free_def = [];
+		let enum_selector_def = [];
+		let enum_to_str_def = [];
+		let parse_def = [];
+		let write_def = [];
 
-			files.filter(file => /.*\.json$/.test(file)).forEach(file => {
-				const json = JSON.parse(fs.readFileSync(path.join(scheme_dir, file), 'utf8'));
-				const defs = parse(json, file, scheme_version);
+		files.filter(file => /.*\.json$/.test(file)).forEach(file => {
+			const json = JSON.parse(fs.readFileSync(path.join(scheme_dir, file), 'utf8'));
+			const defs = parse(json, file, scheme_version);
 
-				if (defs.enums) enums_def = enums_def.concat(defs.enums);
-				if (defs.dependencies) dependencies_def = dependencies_def.concat(defs.dependencies);
-				if (defs.structs) structs_def = structs_def.concat(defs.structs);
-				if (defs.free) free_def = free_def.concat(defs.free);
-				if (defs.enum_selector) enum_selector_def = enum_selector_def.concat(defs.enum_selector);
-				if (defs.enum_to_str) enum_to_str_def = enum_to_str_def.concat(defs.enum_to_str);
-				if (defs.parse) parse_def = parse_def.concat(defs.parse);
-				if (defs.write) write_def = write_def.concat(defs.write);
-			});
-
-			typesStream.write(enums_def.join('\n'));
-			dependencies_def.forEach(deps => {
-				typesStream.write(deps.enums.join('\n'));
-				typesStream.write(deps.structs.join('\n'));
-				if (deps.free) free_def = deps.free.concat(free_def);
-				if (deps.enum_selector) enum_selector_def = enum_selector_def.concat(deps.enum_selector);
-				if (deps.enum_to_str) enum_to_str_def = enum_to_str_def.concat(deps.enum_to_str);
-				if (deps.parse) parse_def = deps.parse.concat(parse_def);
-				if (deps.write) write_def = deps.write.concat(write_def);
-			});
-			typesStream.write(structs_def.join('\n'));
-			typesImplStream.write(free_def.join('\n'));
-			typesImplStream.write(enum_selector_def.join('\n'));
-			typesImplStream.write(parse_def.join('\n'));
-			writeImplStream.write(enum_to_str_def.join('\n'));
-			writeImplStream.write(write_def.join('\n'));
-
-			typesStream.write(fs.readFileSync(path.join(__dirname, 'vrm_types_footer.txt'), 'utf8'));
-
-			typesStream.write('\n');
-			typesImplStream.write('\n');
-			writeImplStream.write('\n');
-
-			typesStream.end();
-			typesImplStream.end();
-			writeImplStream.end();
+			if (defs.enums) enums_def = enums_def.concat(defs.enums);
+			if (defs.dependencies) dependencies_def = dependencies_def.concat(defs.dependencies);
+			if (defs.structs) structs_def = structs_def.concat(defs.structs);
+			if (defs.free) free_def = free_def.concat(defs.free);
+			if (defs.enum_selector) enum_selector_def = enum_selector_def.concat(defs.enum_selector);
+			if (defs.enum_to_str) enum_to_str_def = enum_to_str_def.concat(defs.enum_to_str);
+			if (defs.parse) parse_def = parse_def.concat(defs.parse);
+			if (defs.write) write_def = write_def.concat(defs.write);
 		});
 
+		typesStream.write(enums_def.join('\n'));
+		dependencies_def.forEach(deps => {
+			typesStream.write(deps.enums.join('\n'));
+			typesStream.write(deps.structs.join('\n'));
+			if (deps.free) free_def = deps.free.concat(free_def);
+			if (deps.enum_selector) enum_selector_def = enum_selector_def.concat(deps.enum_selector);
+			if (deps.enum_to_str) enum_to_str_def = enum_to_str_def.concat(deps.enum_to_str);
+			if (deps.parse) parse_def = deps.parse.concat(parse_def);
+			if (deps.write) write_def = deps.write.concat(write_def);
+		});
+		typesStream.write(structs_def.join('\n'));
+		typesImplStream.write(free_def.join('\n'));
+		typesImplStream.write(enum_selector_def.join('\n'));
+		typesImplStream.write(parse_def.join('\n'));
+		writeImplStream.write(enum_to_str_def.join('\n'));
+		writeImplStream.write(write_def.join('\n'));
+
+		typesStream.write(fs.readFileSync(path.join(__dirname, 'vrm_types_footer.txt'), 'utf8'));
+
+		typesStream.write('\n');
+		typesImplStream.write('\n');
+		writeImplStream.write('\n');
+
+		typesStream.end();
+		typesImplStream.end();
+		writeImplStream.end();
 	});
+
 });
 
 /* vrm_type_generator is distributed under MIT license:
