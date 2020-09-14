@@ -603,6 +603,10 @@ typedef struct cgltf_asset {
 #include "vrm/vrm_types.v0_0.h"
 #endif
 
+#ifdef CGLTF_VRM_v1_0_IMPLEMENTATION
+#include "vrm/vrm_types.v1_0.h"
+#endif
+
 typedef struct cgltf_data
 {
 	cgltf_file_type file_type;
@@ -678,6 +682,12 @@ typedef struct cgltf_data
 	cgltf_vrm_v0_0 vrm_v0_0;
 	cgltf_bool has_vrm_v0_0;
 #endif
+
+#ifdef CGLTF_VRM_v1_0_IMPLEMENTATION
+	cgltf_vrmc_vrm_v1_0 vrm_v1_0;
+	cgltf_bool has_vrm_v1_0;
+#endif
+
 } cgltf_data;
 
 cgltf_result cgltf_parse(
@@ -1564,6 +1574,10 @@ void cgltf_free_extensions(cgltf_data* data, cgltf_extension* extensions, cgltf_
 static void cgltf_vrm_v0_0_free(const struct cgltf_memory_options* memory, cgltf_vrm_v0_0* data);
 #endif
 
+#ifdef CGLTF_VRM_v1_0_IMPLEMENTATION
+static void cgltf_vrmc_vrm_v1_0_free(const struct cgltf_memory_options* memory, cgltf_vrmc_vrm_v1_0* data);
+#endif
+
 void cgltf_free(cgltf_data* data)
 {
 	if (!data)
@@ -1575,6 +1589,10 @@ void cgltf_free(cgltf_data* data)
 
 #ifdef CGLTF_VRM_v0_0_IMPLEMENTATION
 	cgltf_vrm_v0_0_free(&data->memory, &data->vrm_v0_0);
+#endif
+
+#ifdef CGLTF_VRM_v1_0_IMPLEMENTATION
+	cgltf_vrmc_vrm_v1_0_free(&data->memory, &data->vrm_v1_0);
 #endif
 
 	data->memory.free(data->memory.user_data, data->asset.copyright);
@@ -5303,6 +5321,10 @@ static cgltf_size cgltf_calc_size(cgltf_type type, cgltf_component_type componen
 #include "vrm/vrm_types.v0_0.inl"
 #endif
 
+#ifdef CGLTF_VRM_v1_0_IMPLEMENTATION
+#include "vrm/vrm_types.v1_0.inl"
+#endif
+
 static int cgltf_fixup_pointers(cgltf_data* out_data);
 
 static int cgltf_parse_json_root(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, cgltf_data* out_data)
@@ -5442,6 +5464,15 @@ static int cgltf_parse_json_root(cgltf_options* options, jsmntok_t const* tokens
 					out_data->has_vrm_v0_0 = 1;
 				}
 #endif
+
+#ifdef CGLTF_VRM_v1_0_IMPLEMENTATION
+				else if (cgltf_json_strcmp(tokens + i, json_chunk, "VRMC_vrm") == 0)
+				{
+					i = cgltf_parse_json_vrmc_vrm_v1_0(options, tokens, i + 1, json_chunk, &out_data->vrm_v1_0);
+					out_data->has_vrm_v1_0 = 1;
+				}
+#endif
+				
 				else
 				{
 					i = cgltf_parse_json_unprocessed_extension(options, tokens, i, json_chunk, &(out_data->data_extensions[out_data->data_extensions_count++]));

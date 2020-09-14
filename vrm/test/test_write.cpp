@@ -1,6 +1,8 @@
 #define CGLTF_IMPLEMENTATION
 #define CGLTF_WRITE_IMPLEMENTATION
 #define CGLTF_VRM_v0_0_IMPLEMENTATION
+#define CGLTF_VRM_v1_0_IMPLEMENTATION
+
 #include "../../cgltf_write.h"
 
 #include <algorithm>

@@ -1,0 +1,38 @@
+{
+  "title": "VRMCVrm",
+  "type": "object",
+  "description": "",
+  "properties": {
+    "specVersion": {
+      "type": "string",
+      "description": ""
+    },
+    "meta": {
+      "title": "Meta",
+      "type": "object",
+      "description": "",
+      "$ref": "VRMC_vrm.meta.schema.json"
+    },
+    "humanoid": {
+      "$ref": "VRMC_vrm.humanoid.schema.json"
+    },
+    "firstPerson": {
+      "title": "FirstPerson",
+      "type": "object",
+      "description": "First-person perspective settings",
+      "$ref": "VRMC_vrm.firstPerson.schema.json"
+    },
+    "lookAt": {
+      "title": "LookAt",
+      "type": "object",
+      "description": "Eye gaze control",
+      "$ref": "VRMC_vrm.lookAt.schema.json"
+    },
+    "blendShape": {
+      "title": "BlendShape",
+      "type": "object",
+      "description": "Create animation  ( morph target & material color & texture offset )",
+      "$ref": "VRMC_vrm.blendShape.schema.json"
+    }
+  }
+}

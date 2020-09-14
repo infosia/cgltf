@@ -6,7 +6,7 @@
  */
 "use strict"
 
-const supportedVersions = ['0.0'];
+const supportedVersions = ['0.0', '1.0'];
 
 const fs = require('fs');
 const path = require('path');
@@ -20,7 +20,7 @@ const indent4  = indent + indent3;
 const indent5  = indent + indent4;
 
 function sanitize(str) {
-	return str.toLowerCase().replace(/\./g, '_').replace(/_schema_json$/g, '');
+	return str.replace(/^\d+\./, '').toLowerCase().replace(/\./g, '_').replace(/_schema_json$/g, '');
 }
 
 function sanitizeVersion(str) {
@@ -65,7 +65,8 @@ function parse(json, file, version, rootType, subType) {
 	}
 
 	const suffix = '_v' + sanitizeVersion(version);
-	const typename = rootType ? (rootType.replace(suffix, '') + '_' + subType + suffix) : (prefix + sanitize(json.title) + suffix);
+	const title = sanitize(file);
+	const typename = rootType ? (rootType.replace(suffix, '') + '_' + subType + suffix) : (prefix + title + suffix);
 
 	let structs_def = [];
 	let enums_def   = [];
@@ -94,6 +95,8 @@ function parse(json, file, version, rootType, subType) {
 		const type = json.properties[name].type;
 		const ref  = json.properties[name]['$ref'];
 		const primitive = selectType(type);
+		const allOf = json.properties[name].allOf;
+
 		if (type == 'string') {
 			parse_def.push(indent3 + '} else if (cgltf_json_strcmp(tokens + i, json_chunk, "' + name + '") == 0) {');
 			const enums = json.properties[name]['enum'];
@@ -147,7 +150,7 @@ function parse(json, file, version, rootType, subType) {
 				throw new Error('Unknown type: ' + type + ' for ' + name + ' in ' + file);
 			}
 			write_def.push(indent1 + selectWriteFunc(type) + '(context, "' + name + '", data->' + name + ');');
-		} else if (type == 'object') {
+		} else if (!ref && type == 'object') {
 			parse_def.push(indent3 + '} else if (cgltf_json_strcmp(tokens + i, json_chunk, "' + name + '") == 0) {');
 
 			if (vec3(json.properties[name])) {
@@ -276,6 +279,20 @@ function parse(json, file, version, rootType, subType) {
 					write_def.push(indent1 + '}');
 					write_def.push(indent1 + 'cgltf_write_line(context, "]");');
 
+				} else if (items.type == 'string') {
+					structs_def.push(indent1 + 'char** ' + name + ';');
+					free_def.push(indent1 + 'for (cgltf_size i = 0; i < data->' + name + '_count; i++) {');
+					free_def.push(indent2 + 'memory->free(memory->user_data, &data->'  + name + '[i]);');
+					free_def.push(indent1 + '}');
+
+					parse_def.push(indent4 + 'i = cgltf_parse_json_string_array(options, tokens, i + 1, json_chunk, &out_data->' + name + ', &out_data->' + name + '_count);');
+
+					write_def.push(indent1 + 'cgltf_write_line(context, "\\"' + name + '\\": [");');
+					write_def.push(indent1 + 'for (cgltf_size i = 0; i < data->' + name + '_count; ++i) {');
+					write_def.push(indent2 + 'cgltf_write_strprop(context, "' + name + '", data->' + name + ' + i);');
+					write_def.push(indent1 + '}');
+					write_def.push(indent1 + 'cgltf_write_line(context, "]");');
+
 				} else {
 					throw new Error('Unknown type: ' + items.type + ' for ' + name + '.items in ' + file);
 				}
@@ -294,6 +311,13 @@ function parse(json, file, version, rootType, subType) {
 
 			write_def.push(indent1 + 'cgltf_write_line(context, "\\"' + name + '\\": ");');
 			write_def.push(indent1 + 'cgltf_write_' + refname + '(context, &data->' + name + ');');
+		} else if (allOf) {
+			// Note: Currently this only assumes glTF id which is string (See glTFid.schema.json)
+			structs_def.push(indent1 + 'char* ' + name + ';');
+			free_def.push(indent1 + 'memory->free(memory->user_data, data->' + name + ');');
+			parse_def.push(indent3 + '} else if (cgltf_json_strcmp(tokens + i, json_chunk, "' + name + '") == 0) {');
+			parse_def.push(indent4 + 'i = cgltf_parse_json_string(options, tokens, i + 1, json_chunk, &out_data->' + name + ');');
+			write_def.push(indent1 + 'cgltf_write_strprop(context, "' + name + '", data->' + name + ');');
 		} else {
 			throw new Error('Unknown type: ' + type + ' for ' + name + ' in ' + file);
 		}
@@ -342,7 +366,8 @@ supportedVersions.forEach(scheme_version => {
 		let typesImplStream = fs.createWriteStream(path.join(__dirname, 'vrm_types.' + suffix + '.inl'), 'utf8');
 		let writeImplStream = fs.createWriteStream(path.join(__dirname, 'vrm_write.' + suffix + '.inl'), 'utf8');
 
-		typesStream.write(fs.readFileSync(path.join(__dirname, 'vrm_types_header.txt'), 'utf8'));
+		let header = fs.readFileSync(path.join(__dirname, 'vrm_types_header.txt'), 'utf8').toString();
+		typesStream.write(header.replace(/_VERSION_/g, '_' + suffix.toUpperCase() + '_'), 'utf8');
 
 		let structs_def = [];
 		let enums_def   = [];
@@ -384,7 +409,8 @@ supportedVersions.forEach(scheme_version => {
 		writeImplStream.write(enum_to_str_def.join('\n'));
 		writeImplStream.write(write_def.join('\n'));
 
-		typesStream.write(fs.readFileSync(path.join(__dirname, 'vrm_types_footer.txt'), 'utf8'));
+		let footer = fs.readFileSync(path.join(__dirname, 'vrm_types_footer.txt'), 'utf8').toString();
+		typesStream.write(footer.replace(/_VERSION_/g, '_' + suffix.toUpperCase() + '_'), 'utf8');
 
 		typesStream.write('\n');
 		typesImplStream.write('\n');

@@ -1,0 +1,12 @@
+{
+  "title": "Humanoid",
+  "type": "object",
+  "description": "Correspondence between nodes and human bones",
+  "properties": {
+    "humanBones": {
+      "$ref": "VRMC_vrm.humanoid.humanBones.schema.json"
+    }
+  },
+  "additionalProperties": false,
+  "required": [ "humanBones" ]
+}

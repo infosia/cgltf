@@ -5,8 +5,8 @@
  *
  */
 
-#ifndef CGLTF_VRM_TYPES_H_INCLUDED__
-#define CGLTF_VRM_TYPES_H_INCLUDED__
+#ifndef CGLTF_VRM_TYPES_V0_0_H_INCLUDED__
+#define CGLTF_VRM_TYPES_V0_0_H_INCLUDED__
 
 #ifdef __cplusplus
 extern "C" {
@@ -294,7 +294,7 @@ typedef struct cgltf_vrm_v0_0 {
 }
 #endif
 
-#endif /* #ifndef CGLTF_VRM_TYPES_H_INCLUDED__ */
+#endif /* #ifndef CGLTF_VRM_TYPES_V0_0_H_INCLUDED__ */
 
 /* vrm_types is distributed under MIT license:
  *

@@ -3,7 +3,7 @@
 }
 #endif
 
-#endif /* #ifndef CGLTF_VRM_TYPES_H_INCLUDED__ */
+#endif /* #ifndef CGLTF_VRM_TYPES_VERSION_H_INCLUDED__ */
 
 /* vrm_types is distributed under MIT license:
  *

@@ -1,0 +1,29 @@
+{
+  "title": "MaterialValue",
+  "type": "object",
+  "description": "",
+  "properties": {
+    "material": {
+      "type": "integer",
+      "description": ""
+    },
+    "type": {
+      "title": "MaterialValueType",
+      "type": "string",
+      "enum": [
+        "color",
+        "emissionColor",
+        "shadeColor",
+        "rimColor",
+        "outlineColor"
+      ]
+    },
+    "targetValue": {
+      "type": "array",
+      "description": "",
+      "items": {
+        "type": "number"
+      }
+    }
+  }
+}

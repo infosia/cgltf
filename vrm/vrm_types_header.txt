@@ -5,8 +5,8 @@
  *
  */
 
-#ifndef CGLTF_VRM_TYPES_H_INCLUDED__
-#define CGLTF_VRM_TYPES_H_INCLUDED__
+#ifndef CGLTF_VRM_TYPES_VERSION_H_INCLUDED__
+#define CGLTF_VRM_TYPES_VERSION_H_INCLUDED__
 
 #ifdef __cplusplus
 extern "C" {
