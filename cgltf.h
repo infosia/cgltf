@@ -675,7 +675,7 @@ typedef struct cgltf_data
 	cgltf_file_options file;
 
 #ifdef CGLTF_VRM_v0_0_IMPLEMENTATION
-	cgltf_vrm_v0_0 vrm;
+	cgltf_vrm_v0_0 vrm_v0_0;
 	cgltf_bool has_vrm_v0_0;
 #endif
 } cgltf_data;
@@ -1574,7 +1574,7 @@ void cgltf_free(cgltf_data* data)
 	void (*file_release)(const struct cgltf_memory_options*, const struct cgltf_file_options*, void* data) = data->file.release ? data->file.release : cgltf_default_file_release;
 
 #ifdef CGLTF_VRM_v0_0_IMPLEMENTATION
-	cgltf_vrm_v0_0_free(&data->memory, &data->vrm);
+	cgltf_vrm_v0_0_free(&data->memory, &data->vrm_v0_0);
 #endif
 
 	data->memory.free(data->memory.user_data, data->asset.copyright);
@@ -5438,7 +5438,7 @@ static int cgltf_parse_json_root(cgltf_options* options, jsmntok_t const* tokens
 #ifdef CGLTF_VRM_v0_0_IMPLEMENTATION
 				else if (cgltf_json_strcmp(tokens + i, json_chunk, "VRM") == 0)
 				{
-					i = cgltf_parse_json_vrm_v0_0(options, tokens, i + 1, json_chunk, &out_data->vrm);
+					i = cgltf_parse_json_vrm_v0_0(options, tokens, i + 1, json_chunk, &out_data->vrm_v0_0);
 					out_data->has_vrm_v0_0 = 1;
 				}
 #endif

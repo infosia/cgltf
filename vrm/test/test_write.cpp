@@ -63,38 +63,38 @@ int main(int argc, char** argv)
 	}
 	CGLTF_FREE(out_json);
 
-	if (data0->vrm.exporterVersion && strncmp(data0->vrm.exporterVersion, data1->vrm.exporterVersion , strlen(data0->vrm.exporterVersion)) != 0) {
-		printf("[FAILED] failed to test vrm exporterVersion: %s, actual %s\n", data0->vrm.exporterVersion, data1->vrm.exporterVersion);
+	if (data0->vrm_v0_0.exporterVersion && strncmp(data0->vrm_v0_0.exporterVersion, data1->vrm_v0_0.exporterVersion , strlen(data0->vrm_v0_0.exporterVersion)) != 0) {
+		printf("[FAILED] failed to test vrm exporterVersion: %s, actual %s\n", data0->vrm_v0_0.exporterVersion, data1->vrm_v0_0.exporterVersion);
 		return -1;
 	}
 
-	if (data0->vrm.meta.title && strncmp(data0->vrm.meta.title, data1->vrm.meta.title , strlen(data0->vrm.meta.title)) != 0) {
-		printf("[FAILED] failed to test vrm meta.title: %s, actual %s\n", data0->vrm.meta.title, data1->vrm.meta.title);
+	if (data0->vrm_v0_0.meta.title && strncmp(data0->vrm_v0_0.meta.title, data1->vrm_v0_0.meta.title , strlen(data0->vrm_v0_0.meta.title)) != 0) {
+		printf("[FAILED] failed to test vrm meta.title: %s, actual %s\n", data0->vrm_v0_0.meta.title, data1->vrm_v0_0.meta.title);
 		return -1;
 	}
 
-	if (data1->vrm.humanoid.humanBones_count == 0 || data0->vrm.humanoid.humanBones_count != data1->vrm.humanoid.humanBones_count) {
-		printf("[FAILED] failed to test vrm humanoid.humanBones_count expected: %zd, actual %zd\n", data0->vrm.humanoid.humanBones_count, data1->vrm.humanoid.humanBones_count);
+	if (data1->vrm_v0_0.humanoid.humanBones_count == 0 || data0->vrm_v0_0.humanoid.humanBones_count != data1->vrm_v0_0.humanoid.humanBones_count) {
+		printf("[FAILED] failed to test vrm humanoid.humanBones_count expected: %zd, actual %zd\n", data0->vrm_v0_0.humanoid.humanBones_count, data1->vrm_v0_0.humanoid.humanBones_count);
 		return -1;
 	}
 
-	if (data0->vrm.firstPerson.firstPersonBone != data1->vrm.firstPerson.firstPersonBone) {
-		printf("[FAILED] failed to test vrm firstPerson.firstPersonBone expected: %d, actual %d\n", data0->vrm.firstPerson.firstPersonBone, data1->vrm.firstPerson.firstPersonBone);
+	if (data0->vrm_v0_0.firstPerson.firstPersonBone != data1->vrm_v0_0.firstPerson.firstPersonBone) {
+		printf("[FAILED] failed to test vrm firstPerson.firstPersonBone expected: %d, actual %d\n", data0->vrm_v0_0.firstPerson.firstPersonBone, data1->vrm_v0_0.firstPerson.firstPersonBone);
 		return -1;
 	}
 
-	if (data0->vrm.blendShapeMaster.blendShapeGroups_count != data1->vrm.blendShapeMaster.blendShapeGroups_count) {
-		printf("[FAILED] failed to test vrm blendShapeMaster.blendShapeGroups_count expected: %zd, actual %zd\n", data0->vrm.blendShapeMaster.blendShapeGroups_count, data1->vrm.blendShapeMaster.blendShapeGroups_count);
+	if (data0->vrm_v0_0.blendShapeMaster.blendShapeGroups_count != data1->vrm_v0_0.blendShapeMaster.blendShapeGroups_count) {
+		printf("[FAILED] failed to test vrm blendShapeMaster.blendShapeGroups_count expected: %zd, actual %zd\n", data0->vrm_v0_0.blendShapeMaster.blendShapeGroups_count, data1->vrm_v0_0.blendShapeMaster.blendShapeGroups_count);
 		return -1;
 	}
 
-	if (data0->vrm.secondaryAnimation.boneGroups_count != data1->vrm.secondaryAnimation.boneGroups_count) {
-		printf("[FAILED] failed to test vrm secondaryAnimation.boneGroups_count expected: %zd, actual %zd\n", data0->vrm.secondaryAnimation.boneGroups_count, data1->vrm.secondaryAnimation.boneGroups_count);
+	if (data0->vrm_v0_0.secondaryAnimation.boneGroups_count != data1->vrm_v0_0.secondaryAnimation.boneGroups_count) {
+		printf("[FAILED] failed to test vrm secondaryAnimation.boneGroups_count expected: %zd, actual %zd\n", data0->vrm_v0_0.secondaryAnimation.boneGroups_count, data1->vrm_v0_0.secondaryAnimation.boneGroups_count);
 		return -1;
 	}
 
-	if (data1->vrm.materialProperties_count == 0 || data0->vrm.materialProperties_count != data1->vrm.materialProperties_count) {
-		printf("[FAILED] failed to test vrm materialProperties expected: %zd, actual %zd\n", data0->vrm.materialProperties_count, data1->vrm.materialProperties_count);
+	if (data1->vrm_v0_0.materialProperties_count == 0 || data0->vrm_v0_0.materialProperties_count != data1->vrm_v0_0.materialProperties_count) {
+		printf("[FAILED] failed to test vrm materialProperties expected: %zd, actual %zd\n", data0->vrm_v0_0.materialProperties_count, data1->vrm_v0_0.materialProperties_count);
 		return -1;
 	}
 

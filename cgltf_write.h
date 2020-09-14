@@ -1190,7 +1190,7 @@ cgltf_size cgltf_write(const cgltf_options* options, char* buffer, cgltf_size si
 	cgltf_write_line(context, "\"extensions\": {");
 	if (context->data->has_vrm_v0_0) {
 		cgltf_write_line(context, "\"VRM\": ");
-		cgltf_write_vrm_v0_0(context, &context->data->vrm);
+		cgltf_write_vrm_v0_0(context, &context->data->vrm_v0_0);
 	}
 	cgltf_write_line(context, "}");
 
