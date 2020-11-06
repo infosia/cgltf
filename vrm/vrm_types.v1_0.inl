@@ -630,6 +630,8 @@ static int cgltf_parse_json_vrmc_vrm_blendshape_v1_0(cgltf_options* options, jsm
 }
 static int cgltf_parse_json_vrmc_vrm_constraint_v1_0(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, cgltf_vrmc_vrm_constraint_v1_0* out_data) {
 	(void)options;
+	(void)out_data;
+	(void)json_chunk;
 	if (tokens[i].type == JSMN_OBJECT) {
 		int size = tokens[i].size; ++i;
 		for (int j = 0; j < size; ++j) {

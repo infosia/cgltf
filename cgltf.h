@@ -599,12 +599,14 @@ typedef struct cgltf_asset {
 	cgltf_extension* extensions;
 } cgltf_asset;
 
-#ifdef CGLTF_VRM_v0_0_IMPLEMENTATION
+#ifdef CGLTF_VRM_v0_0
 #include "vrm/vrm_types.v0_0.h"
+static void cgltf_vrm_v0_0_free(const struct cgltf_memory_options* memory, cgltf_vrm_v0_0* data);
 #endif
 
-#ifdef CGLTF_VRM_v1_0_IMPLEMENTATION
+#ifdef CGLTF_VRM_v1_0
 #include "vrm/vrm_types.v1_0.h"
+static void cgltf_vrmc_vrm_v1_0_free(const struct cgltf_memory_options* memory, cgltf_vrmc_vrm_v1_0* data);
 #endif
 
 typedef struct cgltf_data
@@ -678,12 +680,12 @@ typedef struct cgltf_data
 	cgltf_memory_options memory;
 	cgltf_file_options file;
 
-#ifdef CGLTF_VRM_v0_0_IMPLEMENTATION
+#ifdef CGLTF_VRM_v0_0
 	cgltf_vrm_v0_0 vrm_v0_0;
 	cgltf_bool has_vrm_v0_0;
 #endif
 
-#ifdef CGLTF_VRM_v1_0_IMPLEMENTATION
+#ifdef CGLTF_VRM_v1_0
 	cgltf_vrmc_vrm_v1_0 vrm_v1_0;
 	cgltf_bool has_vrm_v1_0;
 #endif
@@ -1569,14 +1571,6 @@ void cgltf_free_extensions(cgltf_data* data, cgltf_extension* extensions, cgltf_
 	}
 	data->memory.free(data->memory.user_data, extensions);
 }
-
-#ifdef CGLTF_VRM_v0_0_IMPLEMENTATION
-static void cgltf_vrm_v0_0_free(const struct cgltf_memory_options* memory, cgltf_vrm_v0_0* data);
-#endif
-
-#ifdef CGLTF_VRM_v1_0_IMPLEMENTATION
-static void cgltf_vrmc_vrm_v1_0_free(const struct cgltf_memory_options* memory, cgltf_vrmc_vrm_v1_0* data);
-#endif
 
 void cgltf_free(cgltf_data* data)
 {
