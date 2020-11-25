@@ -461,6 +461,7 @@ typedef struct cgltf_primitive {
 	cgltf_draco_mesh_compression draco_mesh_compression;
 	cgltf_size extensions_count;
 	cgltf_extension* extensions;
+	cgltf_size material_index;
 } cgltf_primitive;
 
 typedef struct cgltf_mesh {
@@ -2887,7 +2888,9 @@ static int cgltf_parse_json_primitive(cgltf_options* options, jsmntok_t const* t
 		else if (cgltf_json_strcmp(tokens+i, json_chunk, "material") == 0)
 		{
 			++i;
-			out_prim->material = CGLTF_PTRINDEX(cgltf_material, cgltf_json_to_int(tokens + i, json_chunk));
+			int material_index = cgltf_json_to_int(tokens + i, json_chunk);
+			out_prim->material = CGLTF_PTRINDEX(cgltf_material, material_index);
+			out_prim->material_index = material_index;
 			++i;
 		}
 		else if (cgltf_json_strcmp(tokens+i, json_chunk, "attributes") == 0)
