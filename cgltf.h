@@ -461,7 +461,7 @@ typedef struct cgltf_primitive {
 	cgltf_draco_mesh_compression draco_mesh_compression;
 	cgltf_size extensions_count;
 	cgltf_extension* extensions;
-	cgltf_size material_index;
+	cgltf_int material_index;
 } cgltf_primitive;
 
 typedef struct cgltf_mesh {
