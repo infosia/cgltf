@@ -344,6 +344,7 @@ typedef struct cgltf_texture
 	cgltf_extras extras;
 	cgltf_size extensions_count;
 	cgltf_extension* extensions;
+	cgltf_int image_index;
 } cgltf_texture;
 
 typedef struct cgltf_texture_transform
@@ -550,6 +551,7 @@ struct cgltf_node {
 	cgltf_extras extras;
 	cgltf_size extensions_count;
 	cgltf_extension* extensions;
+	cgltf_int mesh_index;
 };
 
 typedef struct cgltf_scene {
@@ -3889,7 +3891,9 @@ static int cgltf_parse_json_texture(cgltf_options* options, jsmntok_t const* tok
 		else if (cgltf_json_strcmp(tokens + i, json_chunk, "source") == 0) 
 		{
 			++i;
-			out_texture->image = CGLTF_PTRINDEX(cgltf_image, cgltf_json_to_int(tokens + i, json_chunk));
+			cgltf_int index = cgltf_json_to_int(tokens + i, json_chunk);
+			out_texture->image_index = index;
+			out_texture->image = CGLTF_PTRINDEX(cgltf_image, index);
 			++i;
 		}
 		else if (cgltf_json_strcmp(tokens + i, json_chunk, "extras") == 0)
@@ -4747,7 +4751,9 @@ static int cgltf_parse_json_node(cgltf_options* options, jsmntok_t const* tokens
 		{
 			++i;
 			CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_PRIMITIVE);
-			out_node->mesh = CGLTF_PTRINDEX(cgltf_mesh, cgltf_json_to_int(tokens + i, json_chunk));
+			const cgltf_int mesh_index = cgltf_json_to_int(tokens + i, json_chunk);
+			out_node->mesh = CGLTF_PTRINDEX(cgltf_mesh, mesh_index);
+			out_node->mesh_index = mesh_index;
 			++i;
 		}
 		else if (cgltf_json_strcmp(tokens+i, json_chunk, "skin") == 0)
