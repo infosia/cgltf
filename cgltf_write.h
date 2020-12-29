@@ -1,7 +1,7 @@
 /**
  * cgltf_write - a single-file glTF 2.0 writer written in C99.
  *
- * Version: 1.7
+ * Version: 1.9
  *
  * Website: https://github.com/jkuhlmann/cgltf
  *
@@ -76,7 +76,9 @@ cgltf_size cgltf_write(const cgltf_options* options, char* buffer, cgltf_size si
 #define CGLTF_EXTENSION_FLAG_DRACO_MESH_COMPRESSION (1 << 4)
 #define CGLTF_EXTENSION_FLAG_MATERIALS_CLEARCOAT    (1 << 5)
 #define CGLTF_EXTENSION_FLAG_MATERIALS_IOR          (1 << 6)
-#define CGLTF_EXTENSION_FLAG_MATERIALS_TRANSMISSION (1 << 7)
+#define CGLTF_EXTENSION_FLAG_MATERIALS_SPECULAR     (1 << 7)
+#define CGLTF_EXTENSION_FLAG_MATERIALS_TRANSMISSION (1 << 8)
+#define CGLTF_EXTENSION_FLAG_MATERIALS_SHEEN        (1 << 9)
 
 typedef struct {
 	char* buffer;
@@ -94,6 +96,13 @@ typedef struct {
 } cgltf_write_context;
 
 #define CGLTF_MIN(a, b) (a < b ? a : b)
+
+#ifdef FLT_DECIMAL_DIG
+	// FLT_DECIMAL_DIG is C11
+	#define CGLTF_DECIMAL_DIG (FLT_DECIMAL_DIG)
+#else
+	#define CGLTF_DECIMAL_DIG 9
+#endif
 
 #define CGLTF_SPRINTF(...) { \
 		context->tmp = snprintf ( context->cursor, context->remaining, __VA_ARGS__ ); \
@@ -223,7 +232,7 @@ static void cgltf_write_floatprop(cgltf_write_context* context, const char* labe
 	{
 		cgltf_write_indent(context);
 		CGLTF_SPRINTF("\"%s\": ", label);
-		CGLTF_SPRINTF("%g", val);
+		CGLTF_SPRINTF("%.*g", CGLTF_DECIMAL_DIG, val);
 		context->needs_comma = 1;
 
 		if (context->cursor)
@@ -305,11 +314,11 @@ static void cgltf_write_floatarrayprop(cgltf_write_context* context, const char*
 	{
 		if (i != 0)
 		{
-			CGLTF_SPRINTF(", %g", vals[i]);
+			CGLTF_SPRINTF(", %.*g", CGLTF_DECIMAL_DIG, vals[i]);
 		}
 		else
 		{
-			CGLTF_SPRINTF("%g", vals[i]);
+			CGLTF_SPRINTF("%.*g", CGLTF_DECIMAL_DIG, vals[i]);
 		}
 	}
 	CGLTF_SPRINTF("]");
@@ -564,6 +573,16 @@ static void cgltf_write_material(cgltf_write_context* context, const cgltf_mater
 		context->extension_flags |= CGLTF_EXTENSION_FLAG_MATERIALS_IOR;
 	}
 
+	if (material->has_specular)
+	{
+		context->extension_flags |= CGLTF_EXTENSION_FLAG_MATERIALS_SPECULAR;
+	}
+
+	if (material->has_sheen)
+	{
+		context->extension_flags |= CGLTF_EXTENSION_FLAG_MATERIALS_SHEEN;
+	}
+
 	if (material->has_pbr_metallic_roughness)
 	{
 		const cgltf_pbr_metallic_roughness* params = &material->pbr_metallic_roughness;
@@ -580,7 +599,7 @@ static void cgltf_write_material(cgltf_write_context* context, const cgltf_mater
 		cgltf_write_line(context, "}");
 	}
 
-	if (material->unlit || material->has_pbr_specular_glossiness || material->has_clearcoat || material->has_ior || material->has_transmission)
+	if (material->unlit || material->has_pbr_specular_glossiness || material->has_clearcoat || material->has_ior || material->has_specular || material->has_transmission || material->has_sheen)
 	{
 		cgltf_write_line(context, "\"extensions\": {");
 		if (material->has_clearcoat)
@@ -601,12 +620,37 @@ static void cgltf_write_material(cgltf_write_context* context, const cgltf_mater
 			cgltf_write_floatprop(context, "ior", params->ior, 1.5f);
 			cgltf_write_line(context, "}");
 		}
+		if (material->has_specular)
+		{
+			const cgltf_specular* params = &material->specular;
+			cgltf_write_line(context, "\"KHR_materials_specular\": {");
+			CGLTF_WRITE_TEXTURE_INFO("specularTexture", params->specular_texture);
+			cgltf_write_floatprop(context, "specularFactor", params->specular_factor, 1.0f);
+			if (cgltf_check_floatarray(params->specular_color_factor, 3, 1.0f))
+			{
+				cgltf_write_floatarrayprop(context, "specularColorFactor", params->specular_color_factor, 3);
+			}
+			cgltf_write_line(context, "}");
+		}
 		if (material->has_transmission)
 		{
 			const cgltf_transmission* params = &material->transmission;
 			cgltf_write_line(context, "\"KHR_materials_transmission\": {");
 			CGLTF_WRITE_TEXTURE_INFO("transmissionTexture", params->transmission_texture);
 			cgltf_write_floatprop(context, "transmissionFactor", params->transmission_factor, 0.0f);
+			cgltf_write_line(context, "}");
+		}
+		if (material->has_sheen)
+		{
+			const cgltf_sheen* params = &material->sheen;
+			cgltf_write_line(context, "\"KHR_materials_sheen\": {");
+			CGLTF_WRITE_TEXTURE_INFO("sheenColorTexture", params->sheen_color_texture);
+			CGLTF_WRITE_TEXTURE_INFO("sheenRoughnessTexture", params->sheen_roughness_texture);
+			if (cgltf_check_floatarray(params->sheen_color_factor, 3, 0.0f))
+			{
+				cgltf_write_floatarrayprop(context, "sheenColorFactor", params->sheen_color_factor, 3);
+			}
+			cgltf_write_floatprop(context, "sheenRoughnessFactor", params->sheen_roughness_factor, 0.0f);
 			cgltf_write_line(context, "}");
 		}
 		if (material->has_pbr_specular_glossiness)
@@ -993,8 +1037,14 @@ static void cgltf_write_extensions(cgltf_write_context* context, uint32_t extens
 	if (extension_flags & CGLTF_EXTENSION_FLAG_MATERIALS_IOR) {
 		cgltf_write_stritem(context, "KHR_materials_ior");
 	}
+	if (extension_flags & CGLTF_EXTENSION_FLAG_MATERIALS_SPECULAR) {
+		cgltf_write_stritem(context, "KHR_materials_specular");
+	}
 	if (extension_flags & CGLTF_EXTENSION_FLAG_MATERIALS_TRANSMISSION) {
 		cgltf_write_stritem(context, "KHR_materials_transmission");
+	}
+	if (extension_flags & CGLTF_EXTENSION_FLAG_MATERIALS_SHEEN) {
+		cgltf_write_stritem(context, "KHR_materials_sheen");
 	}
 }
 
