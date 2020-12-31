@@ -1048,7 +1048,7 @@ static void cgltf_write_extensions(cgltf_write_context* context, uint32_t extens
 	}
 }
 
-#ifdef CGLTF_VRM_v0_0_IMPLEMENTATION
+#ifdef CGLTF_VRM_v0_0
 #include "vrm/vrm_write.v0_0.inl"
 #endif
 
