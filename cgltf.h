@@ -599,6 +599,7 @@ struct cgltf_node {
 	cgltf_size extensions_count;
 	cgltf_extension* extensions;
 	cgltf_int mesh_index;
+	cgltf_int skin_index;
 };
 
 typedef struct cgltf_scene {
@@ -5111,7 +5112,9 @@ static int cgltf_parse_json_node(cgltf_options* options, jsmntok_t const* tokens
 		{
 			++i;
 			CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_PRIMITIVE);
-			out_node->skin = CGLTF_PTRINDEX(cgltf_skin, cgltf_json_to_int(tokens + i, json_chunk));
+			const cgltf_int skin_index = cgltf_json_to_int(tokens + i, json_chunk);
+			out_node->skin = CGLTF_PTRINDEX(cgltf_skin, skin_index);
+			out_node->skin_index = skin_index;
 			++i;
 		}
 		else if (cgltf_json_strcmp(tokens+i, json_chunk, "camera") == 0)
