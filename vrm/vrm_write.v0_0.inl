@@ -298,9 +298,7 @@ static void cgltf_write_vrm_humanoid_bone_v0_0(cgltf_write_context* context, con
 		cgltf_write_floatprop_strict(context, "z", data->center[2]);
 		cgltf_write_line(context, "}");
 	}
-	if (data->axisLength > 0) {
-		cgltf_write_floatprop_strict(context, "axisLength", data->axisLength);
-	}
+	cgltf_write_floatprop_strict(context, "axisLength", data->axisLength);
 	cgltf_write_line(context, "}");
 }
 static void cgltf_write_vrm_humanoid_v0_0(cgltf_write_context* context, const cgltf_vrm_humanoid_v0_0* data) {

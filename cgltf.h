@@ -277,6 +277,7 @@ typedef struct cgltf_meshopt_compression
 	cgltf_size count;
 	cgltf_meshopt_compression_mode mode;
 	cgltf_meshopt_compression_filter filter;
+	cgltf_size buffer_index;
 } cgltf_meshopt_compression;
 
 typedef struct cgltf_buffer_view
@@ -292,6 +293,7 @@ typedef struct cgltf_buffer_view
 	cgltf_extras extras;
 	cgltf_size extensions_count;
 	cgltf_extension* extensions;
+	cgltf_size buffer_index;
 } cgltf_buffer_view;
 
 typedef struct cgltf_accessor_sparse
@@ -311,6 +313,8 @@ typedef struct cgltf_accessor_sparse
 	cgltf_extension* indices_extensions;
 	cgltf_size values_extensions_count;
 	cgltf_extension* values_extensions;
+	cgltf_size indices_buffer_view_index;
+	cgltf_size values_buffer_view_index;
 } cgltf_accessor_sparse;
 
 typedef struct cgltf_accessor
@@ -331,6 +335,7 @@ typedef struct cgltf_accessor
 	cgltf_extras extras;
 	cgltf_size extensions_count;
 	cgltf_extension* extensions;
+	cgltf_size buffer_view_index;
 } cgltf_accessor;
 
 typedef struct cgltf_attribute
@@ -339,6 +344,7 @@ typedef struct cgltf_attribute
 	cgltf_attribute_type type;
 	cgltf_int index;
 	cgltf_accessor* data;
+	cgltf_size data_index;
 	char* value; // store value when attribute has morph name
 } cgltf_attribute;
 
@@ -351,6 +357,7 @@ typedef struct cgltf_image
 	cgltf_extras extras;
 	cgltf_size extensions_count;
 	cgltf_extension* extensions;
+	cgltf_size buffer_view_index;
 } cgltf_image;
 
 typedef struct cgltf_sampler
@@ -372,7 +379,8 @@ typedef struct cgltf_texture
 	cgltf_extras extras;
 	cgltf_size extensions_count;
 	cgltf_extension* extensions;
-	cgltf_int image_index;
+	cgltf_size image_index;
+	cgltf_size sampler_index;
 } cgltf_texture;
 
 typedef struct cgltf_texture_transform
@@ -393,6 +401,7 @@ typedef struct cgltf_texture_view
 	cgltf_extras extras;
 	cgltf_size extensions_count;
 	cgltf_extension* extensions;
+	cgltf_size texture_index;
 } cgltf_texture_view;
 
 typedef struct cgltf_pbr_metallic_roughness
@@ -492,6 +501,7 @@ typedef struct cgltf_draco_mesh_compression {
 	cgltf_buffer_view* buffer_view;
 	cgltf_attribute* attributes;
 	cgltf_size attributes_count;
+	cgltf_size buffer_view_index;
 } cgltf_draco_mesh_compression;
 
 typedef struct cgltf_primitive {
@@ -509,7 +519,8 @@ typedef struct cgltf_primitive {
 	cgltf_draco_mesh_compression draco_mesh_compression;
 	cgltf_size extensions_count;
 	cgltf_extension* extensions;
-	cgltf_int material_index;
+	cgltf_size material_index;
+	cgltf_size indices_index;
 } cgltf_primitive;
 
 typedef struct cgltf_mesh {
@@ -536,6 +547,8 @@ typedef struct cgltf_skin {
 	cgltf_extras extras;
 	cgltf_size extensions_count;
 	cgltf_extension* extensions;
+	cgltf_size skeleton_index;
+	cgltf_size inverse_bind_matrices_index;
 } cgltf_skin;
 
 typedef struct cgltf_camera_perspective {
@@ -598,8 +611,10 @@ struct cgltf_node {
 	cgltf_extras extras;
 	cgltf_size extensions_count;
 	cgltf_extension* extensions;
-	cgltf_int mesh_index;
-	cgltf_int skin_index;
+	cgltf_size mesh_index;
+	cgltf_size skin_index;
+	cgltf_size camera_index;
+	cgltf_size light_index;
 };
 
 typedef struct cgltf_scene {
@@ -627,6 +642,7 @@ typedef struct cgltf_animation_channel {
 	cgltf_extras extras;
 	cgltf_size extensions_count;
 	cgltf_extension* extensions;
+	cgltf_size target_node_index;
 } cgltf_animation_channel;
 
 typedef struct cgltf_animation {
@@ -728,6 +744,8 @@ typedef struct cgltf_data
 
 	cgltf_memory_options memory;
 	cgltf_file_options file;
+
+	cgltf_size scene_index;
 
 #ifdef CGLTF_VRM_v0_0
 	cgltf_vrm_v0_0 vrm_v0_0;
@@ -2329,7 +2347,7 @@ cgltf_size cgltf_accessor_read_index(const cgltf_accessor* accessor, cgltf_size 
 #define CGLTF_CHECK_KEY(tok_) if ((tok_).type != JSMN_STRING || (tok_).size == 0) { return CGLTF_ERROR_JSON; } /* checking size for 0 verifies that a value follows the key */
 
 #define CGLTF_PTRINDEX(type, idx) (type*)((cgltf_size)idx + 1)
-#define CGLTF_PTRFIXUP(var, data, size) if (var) { if ((cgltf_size)var > size) { return CGLTF_ERROR_JSON; } var = &data[(cgltf_size)var-1]; }
+#define CGLTF_PTRFIXUP(var, data, size) if (var) { if ((cgltf_size)var > size) { return CGLTF_ERROR_JSON; } var##_index = (cgltf_size)var; var = &data[(cgltf_size)var-1]; }
 #define CGLTF_PTRFIXUP_REQ(var, data, size) if (!var || (cgltf_size)var > size) { return CGLTF_ERROR_JSON; } var = &data[(cgltf_size)var-1];
 
 static int cgltf_json_strcmp(jsmntok_t const* tok, const uint8_t* json_chunk, const char* str)
@@ -3015,9 +3033,7 @@ static int cgltf_parse_json_primitive(cgltf_options* options, jsmntok_t const* t
 		else if (cgltf_json_strcmp(tokens+i, json_chunk, "material") == 0)
 		{
 			++i;
-			int material_index = cgltf_json_to_int(tokens + i, json_chunk);
-			out_prim->material = CGLTF_PTRINDEX(cgltf_material, material_index);
-			out_prim->material_index = material_index;
+			out_prim->material = CGLTF_PTRINDEX(cgltf_material, cgltf_json_to_int(tokens + i, json_chunk));
 			++i;
 		}
 		else if (cgltf_json_strcmp(tokens+i, json_chunk, "attributes") == 0)
@@ -4103,9 +4119,7 @@ static int cgltf_parse_json_texture(cgltf_options* options, jsmntok_t const* tok
 		else if (cgltf_json_strcmp(tokens + i, json_chunk, "source") == 0) 
 		{
 			++i;
-			cgltf_int index = cgltf_json_to_int(tokens + i, json_chunk);
-			out_texture->image_index = index;
-			out_texture->image = CGLTF_PTRINDEX(cgltf_image, index);
+			out_texture->image = CGLTF_PTRINDEX(cgltf_image, cgltf_json_to_int(tokens + i, json_chunk));
 			++i;
 		}
 		else if (cgltf_json_strcmp(tokens + i, json_chunk, "extras") == 0)
@@ -5103,18 +5117,14 @@ static int cgltf_parse_json_node(cgltf_options* options, jsmntok_t const* tokens
 		{
 			++i;
 			CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_PRIMITIVE);
-			const cgltf_int mesh_index = cgltf_json_to_int(tokens + i, json_chunk);
-			out_node->mesh = CGLTF_PTRINDEX(cgltf_mesh, mesh_index);
-			out_node->mesh_index = mesh_index;
+			out_node->mesh = CGLTF_PTRINDEX(cgltf_mesh, cgltf_json_to_int(tokens + i, json_chunk));
 			++i;
 		}
 		else if (cgltf_json_strcmp(tokens+i, json_chunk, "skin") == 0)
 		{
 			++i;
 			CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_PRIMITIVE);
-			const cgltf_int skin_index = cgltf_json_to_int(tokens + i, json_chunk);
-			out_node->skin = CGLTF_PTRINDEX(cgltf_skin, skin_index);
-			out_node->skin_index = skin_index;
+			out_node->skin = CGLTF_PTRINDEX(cgltf_skin, cgltf_json_to_int(tokens + i, json_chunk));
 			++i;
 		}
 		else if (cgltf_json_strcmp(tokens+i, json_chunk, "camera") == 0)
