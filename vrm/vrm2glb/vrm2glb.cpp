@@ -1,23 +1,46 @@
+/* vrm2glb is distributed under MIT license:
+ *
+ * Copyright (c) 2021 Kota Iguchi
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+#include <fstream>
+#include <iostream>
+#include <set>
+#include <string>
+
 #define CGLTF_IMPLEMENTATION
 #define CGLTF_WRITE_IMPLEMENTATION
 #define CGLTF_VRM_v0_0
 #define CGLTF_VRM_v0_0_IMPLEMENTATION
 
 #include "../../cgltf_write.h"
+#include "CLI11.hpp"
 
-#include <fstream>
-#include <iostream>
-#include <set>
-#include <string>
-
-static inline void f3_min(cgltf_float* a, cgltf_float* b, cgltf_float* out)
+static void f3_min(cgltf_float* a, cgltf_float* b, cgltf_float* out)
 {
     out[0] = a[0] < b[0] ? a[0] : b[0];
     out[1] = a[1] < b[1] ? a[1] : b[1];
     out[2] = a[2] < b[2] ? a[2] : b[2];
 }
 
-static inline void f3_max(cgltf_float* a, cgltf_float* b, cgltf_float* out)
+static void f3_max(cgltf_float* a, cgltf_float* b, cgltf_float* out)
 {
     out[0] = a[0] > b[0] ? a[0] : b[0];
     out[1] = a[1] > b[1] ? a[1] : b[1];
@@ -85,13 +108,15 @@ static void write(std::string output, std::string in_json, std::string in_bin)
 
 int main(int argc, char** argv)
 {
-    if (argc < 2) {
-        printf("[FAILED] too few arguments\n");
-        printf("[INFO] Usage: vrm2glb input.vrm\n");
-        return -1;
-    }
+    CLI::App app { "vrm2glb: Convert VRM to valid glTF binary (.glb)" };
 
-    std::string input = argv[1];
+    std::string input;
+    app.add_option("-i,--input", input, "input VRM file name");
+
+    bool strip = false;
+    app.add_flag("-s,--strip", strip, "strip VRM extension");
+
+    CLI11_PARSE(app, argc, argv);
 
     cgltf_options options = {};
     cgltf_data* data = NULL;
@@ -163,6 +188,16 @@ int main(int argc, char** argv)
             node->translation[0] = -node->translation[0];
             node->translation[2] = -node->translation[2];
         }
+    }
+
+    result = cgltf_validate(data);
+
+    if (result != cgltf_result_success) {
+        std::cout << "[WARN] Invalid glTF data: " << result << std::endl;
+    }
+
+    if (strip) {
+        data->has_vrm_v0_0 = false;
     }
 
     std::string output = input + ".glb";
