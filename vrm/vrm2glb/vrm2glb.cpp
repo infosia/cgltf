@@ -135,7 +135,7 @@ int main(int argc, char** argv)
         return result;
     }
 
-    std::set<cgltf_size> buffer_done;
+    std::set<cgltf_accessor*> accessor_done;
     std::cout << "[INFO] Converting " << input << std::endl;
     for (cgltf_size i = 0; i < data->meshes_count; ++i) {
         const auto mesh = &data->meshes[i];
@@ -150,20 +150,36 @@ int main(int argc, char** argv)
             for (cgltf_size k = 0; k < primitive->attributes_count; ++k) {
                 const auto* attr = &primitive->attributes[k];
                 const auto accessor = attr->data;
-                const auto data_index = accessor->buffer_view_index;
 
-                if (buffer_done.count(data_index) > 0) {
+                if (accessor_done.count(accessor) > 0) {
                     continue;
                 }
-
                 if (attr->type == cgltf_attribute_type_position) {
-                    std::cout << "[INFO] " << data_index << ", " << accessor->count << " vertices" << std::endl;
+                    std::cout << "[INFO] " << accessor->count << " vertices" << std::endl;
                     vrm_vec3_convert_coord(accessor);
-                    buffer_done.emplace(data_index);
                 } else if (attr->type == cgltf_attribute_type_normal) {
-                    std::cout << "[INFO] " << data_index << ", " << accessor->count << " normals" << std::endl;
+                    std::cout << "[INFO] " << accessor->count << " normals" << std::endl;
                     vrm_vec3_convert_coord(accessor);
-                    buffer_done.emplace(data_index);
+                }
+                accessor_done.emplace(accessor);
+            }
+
+            for (cgltf_size k = 0; k < primitive->targets_count; ++k) {
+                const auto target = &primitive->targets[k];
+                for (cgltf_size a = 0; a < target->attributes_count; ++a) {
+                    const auto attr = &target->attributes[a];
+                    const auto accessor = attr->data;
+                    if (accessor_done.count(accessor) > 0) {
+                        continue;
+                    }
+                    if (attr->type == cgltf_attribute_type_position) {
+                        std::cout << "[INFO] " << accessor->count << " morph vertices" << std::endl;
+                        vrm_vec3_convert_coord(accessor);
+                    } else if (attr->type == cgltf_attribute_type_normal) {
+                        std::cout << "[INFO] " << accessor->count << " morph normals" << std::endl;
+                        vrm_vec3_convert_coord(accessor);
+                    }
+                    accessor_done.emplace(accessor);
                 }
             }
         }
