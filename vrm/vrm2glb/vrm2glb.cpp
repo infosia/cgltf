@@ -9,12 +9,31 @@
 #include <iostream>
 #include <string>
 
-static void vrm_vec3_convert_coord(cgltf_float* data, cgltf_size count)
+static inline void f3_min(cgltf_float* a, cgltf_float* b, cgltf_float* out)
 {
-    for (cgltf_size i = 0; i < count; i++) {
-        data[i] = -data[i];
-        data[i + 2] = -data[i + 2];
-        i += 2;
+    out[0] = a[0] < b[0] ? a[0] : b[0];
+    out[1] = a[1] < b[1] ? a[1] : b[1];
+    out[2] = a[2] < b[2] ? a[2] : b[2];
+}
+
+static inline void f3_max(cgltf_float* a, cgltf_float* b, cgltf_float* out)
+{
+    out[0] = a[0] > b[0] ? a[0] : b[0];
+    out[1] = a[1] > b[1] ? a[1] : b[1];
+    out[2] = a[2] > b[2] ? a[2] : b[2];
+}
+
+static void vrm_vec3_convert_coord(cgltf_accessor* accessor)
+{
+    uint8_t* buffer_data = (uint8_t*)accessor->buffer_view->buffer->data + accessor->buffer_view->offset;
+
+    for (cgltf_size i = 0; i < accessor->count; ++i) {
+	    cgltf_float* element = (cgltf_float*)(buffer_data + accessor->offset + accessor->stride * i);
+        element[0] = -element[0];
+        element[2] = -element[2];
+
+        f3_max(element, accessor->max, accessor->max);
+        f3_min(element, accessor->min, accessor->min);
     }
 }
 
@@ -94,6 +113,11 @@ int main(int argc, char** argv)
 
     for (cgltf_size i = 0; i < data->meshes_count; ++i) {
         const auto mesh = &data->meshes[i];
+
+        if (mesh->name != nullptr) {
+            std::cout << "[INFO] Processing " << mesh->name << std::endl;
+        }
+
         for (cgltf_size j = 0; j < mesh->primitives_count; ++j) {
             const auto primitive = &mesh->primitives[j];
             cgltf_accessor* acc_POSITION = nullptr;
@@ -109,17 +133,11 @@ int main(int argc, char** argv)
             }
 
             if (acc_POSITION != nullptr) {
-                const cgltf_size unpack_count = acc_POSITION->count * 3;
-                const auto buffer_view = acc_POSITION->buffer_view;
-                auto buffer_data = (int8_t*)buffer_view->buffer->data + buffer_view->offset + acc_POSITION->offset;
-                vrm_vec3_convert_coord((cgltf_float*)buffer_data, unpack_count);
+                vrm_vec3_convert_coord(acc_POSITION);
             }
 
             if (acc_NORMAL != nullptr) {
-                const cgltf_size unpack_count = acc_NORMAL->count * 3;
-                const auto buffer_view = acc_NORMAL->buffer_view;
-                auto buffer_data = (int8_t*)buffer_view->buffer->data + buffer_view->offset + acc_NORMAL->offset;
-                vrm_vec3_convert_coord((cgltf_float*)buffer_data, unpack_count);
+                vrm_vec3_convert_coord(acc_NORMAL);
             }
         }
     }
@@ -135,13 +153,11 @@ int main(int argc, char** argv)
     for (cgltf_size i = 0; i < data->skins_count; ++i) {
         const auto skin = &data->skins[i];
         const auto accessor = skin->inverse_bind_matrices;
-        const auto buffer_view = accessor->buffer_view;
-        cgltf_float* buffer_data = (cgltf_float*)((int8_t*)buffer_view->buffer->data + buffer_view->offset + accessor->offset);
+        uint8_t* buffer_data = (uint8_t*)accessor->buffer_view->buffer->data + accessor->buffer_view->offset;
+        cgltf_float* element = (cgltf_float*)(buffer_data + accessor->offset + accessor->stride * i);
 
-        const cgltf_size j = i * 16;
-
-        buffer_data[j + 12] = -buffer_data[j + 12];
-        buffer_data[j + 14] = -buffer_data[j + 14];
+        element[12] = -element[12];
+        element[14] = -element[14];
     }
 
     std::string output = input + ".glb";
