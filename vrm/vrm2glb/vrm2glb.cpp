@@ -7,6 +7,7 @@
 
 #include <fstream>
 #include <iostream>
+#include <set>
 #include <string>
 
 static inline void f3_min(cgltf_float* a, cgltf_float* b, cgltf_float* out)
@@ -25,10 +26,10 @@ static inline void f3_max(cgltf_float* a, cgltf_float* b, cgltf_float* out)
 
 static void vrm_vec3_convert_coord(cgltf_accessor* accessor)
 {
-    uint8_t* buffer_data = (uint8_t*)accessor->buffer_view->buffer->data + accessor->buffer_view->offset;
+    uint8_t* buffer_data = (uint8_t*)accessor->buffer_view->buffer->data + accessor->buffer_view->offset + accessor->offset;
 
     for (cgltf_size i = 0; i < accessor->count; ++i) {
-	    cgltf_float* element = (cgltf_float*)(buffer_data + accessor->offset + accessor->stride * i);
+        cgltf_float* element = (cgltf_float*)(buffer_data + (accessor->stride * i));
         element[0] = -element[0];
         element[2] = -element[2];
 
@@ -109,8 +110,8 @@ int main(int argc, char** argv)
         return result;
     }
 
+    std::set<cgltf_size> buffer_view_done;
     std::cout << "[INFO] Converting " << input << std::endl;
-
     for (cgltf_size i = 0; i < data->meshes_count; ++i) {
         const auto mesh = &data->meshes[i];
 
@@ -120,24 +121,25 @@ int main(int argc, char** argv)
 
         for (cgltf_size j = 0; j < mesh->primitives_count; ++j) {
             const auto primitive = &mesh->primitives[j];
-            cgltf_accessor* acc_POSITION = nullptr;
-            cgltf_accessor* acc_NORMAL = nullptr;
 
             for (cgltf_size k = 0; k < primitive->attributes_count; ++k) {
                 const auto* attr = &primitive->attributes[k];
-                if (attr->type == cgltf_attribute_type_position) {
-                    acc_POSITION = attr->data;
-                } else if (attr->type == cgltf_attribute_type_normal) {
-                    acc_NORMAL = attr->data;
+                const auto accessor = attr->data;
+                const auto data_index = accessor->buffer_view_index;
+
+                if (buffer_view_done.count(data_index) > 0) {
+                    continue;
                 }
-            }
 
-            if (acc_POSITION != nullptr) {
-                vrm_vec3_convert_coord(acc_POSITION);
-            }
-
-            if (acc_NORMAL != nullptr) {
-                vrm_vec3_convert_coord(acc_NORMAL);
+                if (attr->type == cgltf_attribute_type_position) {
+                    std::cout << "[INFO] " << data_index << ", " << accessor->count << " vertices" << std::endl;
+                    vrm_vec3_convert_coord(accessor);
+                    buffer_view_done.emplace(data_index);
+                } else if (attr->type == cgltf_attribute_type_normal) {
+                    std::cout << "[INFO] " << data_index << ", " << accessor->count << " normals" << std::endl;
+                    vrm_vec3_convert_coord(accessor);
+                    buffer_view_done.emplace(data_index);
+                }
             }
         }
     }
