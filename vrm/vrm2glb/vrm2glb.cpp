@@ -87,6 +87,9 @@ static void write(std::string output, std::string in_json, std::string in_bin)
     uint32_t json_size = (uint32_t)in_json_st.tellg();
     in_json_st.seekg(0, std::ios::beg);
 
+    uint32_t json_align = json_size % 4;
+    json_size += json_align;
+
     in_bin_st.seekg(0, std::ios::end);
     uint32_t bin_size = (uint32_t)in_bin_st.tellg();
     in_bin_st.seekg(0, std::ios::beg);
@@ -101,6 +104,9 @@ static void write(std::string output, std::string in_json, std::string in_bin)
     out_st.write(reinterpret_cast<const char*>(&GlbMagicJsonChunk), 4);
 
     out_st << in_json_st.rdbuf();
+    for (uint32_t i = 0; i < json_align; ++i) {
+        out_st << ' ';
+    }
     out_st << in_bin_st.rdbuf();
 
     out_st.close();
