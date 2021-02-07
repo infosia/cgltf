@@ -110,7 +110,7 @@ int main(int argc, char** argv)
         return result;
     }
 
-    std::set<cgltf_size> buffer_view_done;
+    std::set<cgltf_size> buffer_done;
     std::cout << "[INFO] Converting " << input << std::endl;
     for (cgltf_size i = 0; i < data->meshes_count; ++i) {
         const auto mesh = &data->meshes[i];
@@ -127,20 +127,33 @@ int main(int argc, char** argv)
                 const auto accessor = attr->data;
                 const auto data_index = accessor->buffer_view_index;
 
-                if (buffer_view_done.count(data_index) > 0) {
+                if (buffer_done.count(data_index) > 0) {
                     continue;
                 }
 
                 if (attr->type == cgltf_attribute_type_position) {
                     std::cout << "[INFO] " << data_index << ", " << accessor->count << " vertices" << std::endl;
                     vrm_vec3_convert_coord(accessor);
-                    buffer_view_done.emplace(data_index);
+                    buffer_done.emplace(data_index);
                 } else if (attr->type == cgltf_attribute_type_normal) {
                     std::cout << "[INFO] " << data_index << ", " << accessor->count << " normals" << std::endl;
                     vrm_vec3_convert_coord(accessor);
-                    buffer_view_done.emplace(data_index);
+                    buffer_done.emplace(data_index);
                 }
             }
+        }
+    }
+
+    for (cgltf_size i = 0; i < data->skins_count; ++i) {
+        const auto skin = &data->skins[i];
+        const auto accessor = skin->inverse_bind_matrices;
+        uint8_t* buffer_data = (uint8_t*)accessor->buffer_view->buffer->data + accessor->buffer_view->offset + accessor->offset;
+
+        for (cgltf_size j = 0; j < skin->joints_count; ++j) {
+            cgltf_float* element = (cgltf_float*)(buffer_data + accessor->stride * j);
+
+            element[12] = -element[12];
+            element[14] = -element[14];
         }
     }
 
@@ -150,16 +163,6 @@ int main(int argc, char** argv)
             node->translation[0] = -node->translation[0];
             node->translation[2] = -node->translation[2];
         }
-    }
-
-    for (cgltf_size i = 0; i < data->skins_count; ++i) {
-        const auto skin = &data->skins[i];
-        const auto accessor = skin->inverse_bind_matrices;
-        uint8_t* buffer_data = (uint8_t*)accessor->buffer_view->buffer->data + accessor->buffer_view->offset;
-        cgltf_float* element = (cgltf_float*)(buffer_data + accessor->offset + accessor->stride * i);
-
-        element[12] = -element[12];
-        element[14] = -element[14];
     }
 
     std::string output = input + ".glb";
