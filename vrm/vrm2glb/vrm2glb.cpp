@@ -68,12 +68,19 @@ static void write_bin(cgltf_data* data, std::string output)
     std::ofstream fout;
     fout.open(output.c_str(), std::ios::out | std::ios::binary);
 
-    for (cgltf_size i = 0; i < data->buffers_count; i++) {
+    for (cgltf_size i = 0; i < data->buffers_count; ++i) {
         cgltf_buffer* buffer = &data->buffers[i];
 
-        fout.write(reinterpret_cast<const char*>(&buffer->size), 4);
+        cgltf_size aligned_size = (buffer->size + 3) & ~3;
+        cgltf_size align = aligned_size - buffer->size;
+
+        fout.write(reinterpret_cast<const char*>(&aligned_size), 4);
         fout.write(reinterpret_cast<const char*>(&GlbMagicBinChunk), 4);
         fout.write(reinterpret_cast<const char*>(buffer->data), buffer->size);
+
+        for (uint32_t j = 0; j < align; ++j) {
+            fout.write(" ", 1);
+        }
     }
 
     fout.close();
@@ -89,20 +96,20 @@ static void write(std::string output, std::string in_json, std::string in_bin)
     uint32_t json_size = (uint32_t)in_json_st.tellg();
     in_json_st.seekg(0, std::ios::beg);
 
-    uint32_t json_align = json_size % 4;
-    json_size += json_align;
+    uint32_t aligned_json_size = (json_size + 3) & ~3;
+    uint32_t json_align = aligned_json_size - json_size;
 
     in_bin_st.seekg(0, std::ios::end);
     uint32_t bin_size = (uint32_t)in_bin_st.tellg();
     in_bin_st.seekg(0, std::ios::beg);
 
-    uint32_t total_size = GlbHeaderSize + GlbChunkHeaderSize + json_size + bin_size;
+    uint32_t total_size = GlbHeaderSize + GlbChunkHeaderSize + aligned_json_size + bin_size;
 
     out_st.write(reinterpret_cast<const char*>(&GlbMagic), 4);
     out_st.write(reinterpret_cast<const char*>(&GlbVersion), 4);
     out_st.write(reinterpret_cast<const char*>(&total_size), 4);
 
-    out_st.write(reinterpret_cast<const char*>(&json_size), 4);
+    out_st.write(reinterpret_cast<const char*>(&aligned_json_size), 4);
     out_st.write(reinterpret_cast<const char*>(&GlbMagicJsonChunk), 4);
 
     out_st << in_json_st.rdbuf();
