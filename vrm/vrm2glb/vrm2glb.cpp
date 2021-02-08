@@ -53,6 +53,11 @@ static void vrm_vec3_convert_coord(cgltf_accessor* accessor)
 {
     uint8_t* buffer_data = (uint8_t*)accessor->buffer_view->buffer->data + accessor->buffer_view->offset + accessor->offset;
 
+    accessor->max[0] = -FLT_MAX;
+    accessor->max[2] = -FLT_MAX;
+    accessor->min[0] = FLT_MAX;
+    accessor->min[2] = FLT_MAX;
+
     for (cgltf_size i = 0; i < accessor->count; ++i) {
         cgltf_float* element = (cgltf_float*)(buffer_data + (accessor->stride * i));
         element[0] = -element[0];
@@ -207,11 +212,19 @@ int main(int argc, char** argv)
         const auto accessor = skin->inverse_bind_matrices;
         uint8_t* buffer_data = (uint8_t*)accessor->buffer_view->buffer->data + accessor->buffer_view->offset + accessor->offset;
 
+        accessor->max[12] = -FLT_MAX;
+        accessor->max[14] = -FLT_MAX;
+        accessor->min[12] = FLT_MAX;
+        accessor->min[14] = FLT_MAX;
+
         for (cgltf_size j = 0; j < skin->joints_count; ++j) {
             cgltf_float* element = (cgltf_float*)(buffer_data + accessor->stride * j);
 
             element[12] = -element[12];
             element[14] = -element[14];
+
+            f3_max(element+12, accessor->max+12, accessor->max+12);
+            f3_min(element+12, accessor->min+12, accessor->min+12);
         }
     }
 
