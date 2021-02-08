@@ -33,6 +33,8 @@
 #include "../../cgltf_write.h"
 #include "CLI11.hpp"
 
+#define RETURN_WITH_ERROR(MSG, DATA) std::cout << "[ERROR] " << MSG << std::endl; cgltf_free(DATA); return 1;
+
 static void f3_min(cgltf_float* a, cgltf_float* b, cgltf_float* out)
 {
     out[0] = a[0] < b[0] ? a[0] : b[0];
@@ -129,16 +131,18 @@ int main(int argc, char** argv)
     cgltf_result result = cgltf_parse_file(&options, input.c_str(), &data);
 
     if (result != cgltf_result_success) {
-        std::cout << "[FAILED] failed to parse file " << input << std::endl;
+        std::cout << "[ERROR] failed to parse file " << input << std::endl;
         return result;
+    }
+
+    if (!data->has_vrm_v0_0) { 
+        RETURN_WITH_ERROR("vrm2glb supports VRM 0.0 spec only. Exiting.", data)
     }
 
     result = cgltf_load_buffers(&options, data, input.c_str());
 
     if (result != cgltf_result_success) {
-        std::cout << "[FAILED] failed to load buffers from " << input << std::endl;
-        cgltf_free(data);
-        return result;
+        RETURN_WITH_ERROR("failed to load buffers. Exiting.", data)
     }
 
     std::set<cgltf_accessor*> accessor_done;
