@@ -170,7 +170,7 @@ int main(int argc, char** argv)
             const auto primitive = &mesh->primitives[j];
 
             for (cgltf_size k = 0; k < primitive->attributes_count; ++k) {
-                const auto* attr = &primitive->attributes[k];
+                const auto attr = &primitive->attributes[k];
                 const auto accessor = attr->data;
 
                 if (accessor_done.count(accessor) > 0) {
