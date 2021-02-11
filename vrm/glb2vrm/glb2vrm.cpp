@@ -177,10 +177,10 @@ static void transform_apply(cgltf_node* node, const tm_mat44_t* parent_matrix)
 
 int main(int argc, char** argv)
 {
-    CLI::App app { "glb2vrm: Convert VRM to valid glTF binary (.glb)" };
+    CLI::App app { "glb2vrm: Convert glTF binary (.glb) to VRM" };
 
     std::string input;
-    app.add_option("-i,--input", input, "input VRM file name");
+    app.add_option("-i,--input", input, "input glTF binary (.glb) file name");
 
     CLI11_PARSE(app, argc, argv);
 
@@ -255,24 +255,6 @@ int main(int argc, char** argv)
         for (cgltf_size j = 0; j < scene->nodes_count; ++j) {
             transform_apply(scene->nodes[j], identity);
         }
-    }
-
-    for (cgltf_size i = 0; i < data->nodes_count; ++i) {
-        const auto node = &data->nodes[i];
-        tm_vec3_t pos = { node->translation[0] * node->scale[0], node->translation[1] * node->scale[1], node->translation[2] * node->scale[2] };
-        tm_vec4_t rot = { node->rotation[0], node->rotation[1], node->rotation[2], node->rotation[3] };
-        tm_vec3_t newpos = tm_quaternion_rotate_vec3(rot, pos);
-
-        node->translation[0] = newpos.x;
-        node->translation[1] = newpos.y;
-        node->translation[2] = newpos.z;
-        node->rotation[0] = 0;
-        node->rotation[1] = 0;
-        node->rotation[2] = 0;
-        node->rotation[3] = 1;
-        node->scale[0] = 1;
-        node->scale[1] = 1;
-        node->scale[2] = 1;
     }
 
     std::set<cgltf_accessor*> skin_done;
