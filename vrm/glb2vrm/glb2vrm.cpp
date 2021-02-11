@@ -24,7 +24,6 @@
 #include <iostream>
 #include <set>
 #include <string>
-#include <emmintrin.h>
 
 #define CGLTF_IMPLEMENTATION
 #define CGLTF_WRITE_IMPLEMENTATION
@@ -33,19 +32,12 @@
 
 #include "../../cgltf_write.h"
 #include "CLI11.hpp"
+#include "math.inl"
 
 #define RETURN_WITH_ERROR(MSG, DATA)             \
     std::cout << "[ERROR] " << MSG << std::endl; \
     cgltf_free(DATA);                            \
     return 1;
-
-typedef struct vec3 {
-    float x, y, z;
-} vec3;
-
-typedef struct vec4 {
-    float x, y, z, w;
-} vec4;
 
 static inline void f3_min(cgltf_float* a, cgltf_float* b, cgltf_float* out)
 {
@@ -61,40 +53,23 @@ static inline void f3_max(cgltf_float* a, cgltf_float* b, cgltf_float* out)
     out[2] = a[2] > b[2] ? a[2] : b[2];
 }
 
-
-static inline vec4 quaternion_mul(vec4 lhs, vec4 rhs)
+static inline void vrm_vec3_convert_coord(cgltf_accessor* accessor)
 {
-    const vec4 res = {
-        lhs.w * rhs.x + lhs.x * rhs.w + lhs.y * rhs.z - lhs.z * rhs.y,
-        lhs.w * rhs.y + lhs.y * rhs.w + lhs.z * rhs.x - lhs.x * rhs.z,
-        lhs.w * rhs.z + lhs.z * rhs.w + lhs.x * rhs.y - lhs.y * rhs.x,
-        lhs.w * rhs.w - lhs.x * rhs.x - lhs.y * rhs.y - lhs.z * rhs.z,
-    };
-    return res;
-}
+    uint8_t* buffer_data = (uint8_t*)accessor->buffer_view->buffer->data + accessor->buffer_view->offset + accessor->offset;
 
-static inline vec4 quaternion_inverse(vec4 q)
-{
-    const vec4 res = {
-        -q.x,
-        -q.y,
-        -q.z,
-        q.w,
-    };
-    return res;
-}
+    accessor->max[0] = -FLT_MAX;
+    accessor->max[2] = -FLT_MAX;
+    accessor->min[0] = FLT_MAX;
+    accessor->min[2] = FLT_MAX;
 
-static inline vec3 quaternion_rotate_vec3(vec4 q, vec3 v)
-{
-    const vec4 v4 = { v.x, v.y, v.z };
-    const vec4 q_inv = quaternion_inverse(q);
-    const vec4 v4_rot = quaternion_mul(q, quaternion_mul(v4, q_inv));
-    const vec3 res = {
-        v4_rot.x,
-        v4_rot.y,
-        v4_rot.z,
-    };
-    return res;
+    for (cgltf_size i = 0; i < accessor->count; ++i) {
+        cgltf_float* element = (cgltf_float*)(buffer_data + (accessor->stride * i));
+        element[0] = -element[0];
+        element[2] = -element[2];
+
+        f3_max(element, accessor->max, accessor->max);
+        f3_min(element, accessor->min, accessor->min);
+    }
 }
 
 static void write_bin(cgltf_data* data, std::string output)
@@ -155,16 +130,49 @@ static void write(std::string output, std::string in_json, std::string in_bin)
     out_st.close();
 }
 
-static vec3 inverse_bind_translation(const cgltf_node* node) {
-    vec3 bind = { node->translation[0], node->translation[1], node->translation[2] };
+static inline tm_vec3_t inverse_bind_translation(const cgltf_node* node)
+{
+    tm_vec3_t bind = { node->translation[0], node->translation[1], node->translation[2] };
     cgltf_node* parent = node->parent;
-    while(parent != nullptr) {
+    while (parent != nullptr) {
         bind.x += parent->translation[0];
         bind.y += parent->translation[1];
         bind.z += parent->translation[2];
         parent = parent->parent;
     }
     return bind;
+}
+
+static void transform_apply(cgltf_node* node, const tm_mat44_t* parent_matrix)
+{
+    const tm_vec3_t pos = { node->translation[0], node->translation[1], node->translation[2] };
+    tm_vec3_t scale = { node->scale[0], node->scale[1], node->scale[2] };
+    tm_vec4_t rot = { node->rotation[0], node->rotation[1], node->rotation[2], node->rotation[3] };
+
+    tm_vec3_t pos_unused, scale_unused;
+    tm_vec4_t rot_parent;
+    tm_mat44_to_translation_quaternion_scale(&pos_unused, &rot_parent, &scale_unused, parent_matrix);
+
+    tm_vec3_t newpos = tm_quaternion_rotate_vec3(rot_parent, pos);
+
+    tm_mat44_t self, bind_matrix;
+    tm_mat44_from_translation_quaternion_scale(&self, pos, rot, scale);
+    tm_mat44_mul(&bind_matrix, &self, parent_matrix);
+
+    node->translation[0] = -newpos.x;
+    node->translation[1] = newpos.y;
+    node->translation[2] = -newpos.z;
+    node->rotation[0] = 0;
+    node->rotation[1] = 0;
+    node->rotation[2] = 0;
+    node->rotation[3] = 1;
+    node->scale[0] = 1;
+    node->scale[1] = 1;
+    node->scale[2] = 1;
+
+    for (cgltf_size i = 0; i < node->children_count; i++) {
+        transform_apply(node->children[i], &bind_matrix);
+    }
 }
 
 int main(int argc, char** argv)
@@ -192,11 +200,68 @@ int main(int argc, char** argv)
     }
 
     std::cout << "[INFO] Converting " << input << std::endl;
+    std::set<cgltf_accessor*> accessor_coord_done;
+    for (cgltf_size i = 0; i < data->meshes_count; ++i) {
+        const auto mesh = &data->meshes[i];
+
+        if (mesh->name != nullptr) {
+            std::cout << "[INFO] Processing " << mesh->name << std::endl;
+        }
+
+        for (cgltf_size j = 0; j < mesh->primitives_count; ++j) {
+            const auto primitive = &mesh->primitives[j];
+
+            for (cgltf_size k = 0; k < primitive->attributes_count; ++k) {
+                const auto attr = &primitive->attributes[k];
+                const auto accessor = attr->data;
+
+                if (accessor_coord_done.count(accessor) > 0) {
+                    continue;
+                }
+                if (attr->type == cgltf_attribute_type_position) {
+                    std::cout << "[INFO] " << accessor->count << " vertices" << std::endl;
+                    vrm_vec3_convert_coord(accessor);
+                } else if (attr->type == cgltf_attribute_type_normal) {
+                    std::cout << "[INFO] " << accessor->count << " normals" << std::endl;
+                    vrm_vec3_convert_coord(accessor);
+                }
+                accessor_coord_done.emplace(accessor);
+            }
+
+            for (cgltf_size k = 0; k < primitive->targets_count; ++k) {
+                const auto target = &primitive->targets[k];
+                for (cgltf_size a = 0; a < target->attributes_count; ++a) {
+                    const auto attr = &target->attributes[a];
+                    const auto accessor = attr->data;
+                    if (accessor_coord_done.count(accessor) > 0) {
+                        continue;
+                    }
+                    if (attr->type == cgltf_attribute_type_position) {
+                        std::cout << "[INFO] " << accessor->count << " morph vertices" << std::endl;
+                        vrm_vec3_convert_coord(accessor);
+                    } else if (attr->type == cgltf_attribute_type_normal) {
+                        std::cout << "[INFO] " << accessor->count << " morph normals" << std::endl;
+                        vrm_vec3_convert_coord(accessor);
+                    }
+                    accessor_coord_done.emplace(accessor);
+                }
+            }
+        }
+    }
+
+    const auto identity = tm_mat44_identity();
+    for (cgltf_size i = 0; i < data->scenes_count; ++i) {
+        const auto scene = &data->scenes[i];
+        for (cgltf_size j = 0; j < scene->nodes_count; ++j) {
+            transform_apply(scene->nodes[j], identity);
+        }
+    }
+
     for (cgltf_size i = 0; i < data->nodes_count; ++i) {
         const auto node = &data->nodes[i];
-        vec3 pos = { node->translation[0] * node->scale[0], node->translation[1] * node->scale[1], node->translation[2] * node->scale[2] };
-        vec4 rot = { node->rotation[0], node->rotation[1], node->rotation[2], node->rotation[3] };
-        vec3 newpos = quaternion_rotate_vec3(rot, pos);
+        tm_vec3_t pos = { node->translation[0] * node->scale[0], node->translation[1] * node->scale[1], node->translation[2] * node->scale[2] };
+        tm_vec4_t rot = { node->rotation[0], node->rotation[1], node->rotation[2], node->rotation[3] };
+        tm_vec3_t newpos = tm_quaternion_rotate_vec3(rot, pos);
 
         node->translation[0] = newpos.x;
         node->translation[1] = newpos.y;
@@ -210,15 +275,15 @@ int main(int argc, char** argv)
         node->scale[2] = 1;
     }
 
-    std::set<cgltf_accessor*> accessor_done;
+    std::set<cgltf_accessor*> skin_done;
     for (cgltf_size i = 0; i < data->skins_count; ++i) {
         const auto skin = &data->skins[i];
         const auto accessor = skin->inverse_bind_matrices;
 
-        if (accessor_done.count(accessor) > 0) {
+        if (skin_done.count(accessor) > 0) {
             continue;
         }
-        accessor_done.emplace(accessor);
+        skin_done.emplace(accessor);
 
         uint8_t* buffer_data = (uint8_t*)accessor->buffer_view->buffer->data + accessor->buffer_view->offset + accessor->offset;
 
