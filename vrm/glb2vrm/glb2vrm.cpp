@@ -326,6 +326,8 @@ int main(int argc, char** argv)
         std::cout << "[WARN] Invalid glTF data: " << result << std::endl;
     }
 
+    data->has_vrm_v0_0 = true;
+
     std::string output = input + ".glb";
     std::string out_json = input + ".json";
     std::string out_bin = input + ".bin";
