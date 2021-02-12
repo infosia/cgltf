@@ -23,7 +23,9 @@
 #include <fstream>
 #include <iostream>
 #include <set>
+#include <sstream>
 #include <string>
+#include <unordered_map>
 
 #define CGLTF_IMPLEMENTATION
 #define CGLTF_WRITE_IMPLEMENTATION
@@ -32,6 +34,8 @@
 
 #include "../../cgltf_write.h"
 #include "CLI11.hpp"
+#include "json11.hpp"
+
 #include "math.inl"
 
 #define RETURN_WITH_ERROR(MSG, DATA)             \
@@ -39,21 +43,21 @@
     cgltf_free(DATA);                            \
     return 1;
 
-static inline void f3_min(cgltf_float* a, cgltf_float* b, cgltf_float* out)
+static void f3_min(cgltf_float* a, cgltf_float* b, cgltf_float* out)
 {
     out[0] = a[0] < b[0] ? a[0] : b[0];
     out[1] = a[1] < b[1] ? a[1] : b[1];
     out[2] = a[2] < b[2] ? a[2] : b[2];
 }
 
-static inline void f3_max(cgltf_float* a, cgltf_float* b, cgltf_float* out)
+static void f3_max(cgltf_float* a, cgltf_float* b, cgltf_float* out)
 {
     out[0] = a[0] > b[0] ? a[0] : b[0];
     out[1] = a[1] > b[1] ? a[1] : b[1];
     out[2] = a[2] > b[2] ? a[2] : b[2];
 }
 
-static inline void vrm_vec3_convert_coord(cgltf_accessor* accessor)
+static void vrm_vec3_convert_coord(cgltf_accessor* accessor)
 {
     uint8_t* buffer_data = (uint8_t*)accessor->buffer_view->buffer->data + accessor->buffer_view->offset + accessor->offset;
 
@@ -97,8 +101,8 @@ static void write_bin(cgltf_data* data, std::string output)
 
 static void write(std::string output, std::string in_json, std::string in_bin)
 {
-    std::ifstream in_json_st(in_json, std::ios::binary);
-    std::ifstream in_bin_st(in_bin, std::ios::binary);
+    std::ifstream in_json_st(in_json, std::ios::in | std::ios::binary);
+    std::ifstream in_bin_st(in_bin, std::ios::in | std::ios::binary);
     std::ofstream out_st(output, std::ios::trunc | std::ios::binary);
 
     in_json_st.seekg(0, std::ios::end);
@@ -130,7 +134,7 @@ static void write(std::string output, std::string in_json, std::string in_bin)
     out_st.close();
 }
 
-static inline tm_vec3_t inverse_bind_translation(const cgltf_node* node)
+static tm_vec3_t inverse_bind_translation(const cgltf_node* node)
 {
     tm_vec3_t bind = { node->translation[0], node->translation[1], node->translation[2] };
     cgltf_node* parent = node->parent;
@@ -146,8 +150,8 @@ static inline tm_vec3_t inverse_bind_translation(const cgltf_node* node)
 static void transform_apply(cgltf_node* node, const tm_mat44_t* parent_matrix)
 {
     const tm_vec3_t pos = { node->translation[0], node->translation[1], node->translation[2] };
-    tm_vec3_t scale = { node->scale[0], node->scale[1], node->scale[2] };
-    tm_vec4_t rot = { node->rotation[0], node->rotation[1], node->rotation[2], node->rotation[3] };
+    const tm_vec3_t scale = { node->scale[0], node->scale[1], node->scale[2] };
+    const tm_vec4_t rot = { node->rotation[0], node->rotation[1], node->rotation[2], node->rotation[3] };
 
     tm_vec3_t pos_unused, scale_unused;
     tm_vec4_t rot_parent;
@@ -175,12 +179,118 @@ static void transform_apply(cgltf_node* node, const tm_mat44_t* parent_matrix)
     }
 }
 
+static char* alloc_chars(const char* str) {
+    const auto length = strlen(str);
+    if (length == 0) {
+        return (char*)calloc(1, 1);
+    }
+    auto dst = (char*)calloc(length + 1, 1);
+    if (dst > 0)
+        strncpy(dst, str, length);    
+
+    return dst;
+}
+
+static void ensure_defaults(cgltf_data* data) {
+    data->has_vrm_v0_0 = true;
+
+    const auto vrm = &data->vrm_v0_0;
+    const auto meta = &vrm->meta;
+
+    vrm->exporterVersion = alloc_chars("cgltf+VRM 1.9");
+    vrm->specVersion = alloc_chars("0.0");
+
+    meta->title = alloc_chars("");
+    meta->author = alloc_chars("");
+    meta->version = alloc_chars("");
+    meta->contactInformation = alloc_chars("");
+    meta->reference = alloc_chars("");
+}
+
+static bool update_bone_mapping(std::string file, cgltf_data* data)
+{
+    std::ifstream f(file, std::ios::in);
+    if (f.fail()) {
+        std::cout << "[ERROR] failed to read bone mapping file " << file << std::endl;
+        return false;
+    }
+
+    std::ostringstream ss;
+    ss << f.rdbuf();
+    std::string content = ss.str();
+
+    std::string parse_error;
+    const auto json = json11::Json::parse(content, parse_error);
+
+    if (!parse_error.empty()) {
+        std::cout << "[ERROR] failed to parse bone mapping file " << file << std::endl;
+        std::cout << parse_error << std::endl;
+        return false;
+    }
+
+    const auto vrm = &data->vrm_v0_0.humanoid;
+    const auto bones = json.object_items();
+
+    if (bones.size() == 0) {
+        std::cout << "[ERROR] no bone mapping found in " << file << std::endl;
+        return false;
+    }
+
+    vrm->humanBones_count = bones.size();
+    vrm->humanBones = (cgltf_vrm_humanoid_bone_v0_0*)malloc(sizeof(cgltf_vrm_humanoid_bone_v0_0) * bones.size());
+
+    std::unordered_map<std::string, cgltf_int> node_names;
+    for (cgltf_size i = 0; i < data->nodes_count; ++i) {
+        const auto node = &data->nodes[i];
+        if (node->name != nullptr && strlen(node->name) > 0) {
+            std::string name = node->name;
+            node_names.emplace(name, static_cast<cgltf_int>(i));
+        }
+    }
+
+    cgltf_size i = 0;
+    for (const auto bone : bones) {
+
+        if (!bone.second.is_string()) {
+            std::cout << "[ERROR] bone mapping is not a string. index=" << i << std::endl;
+            return false;            
+        }
+
+        auto dst = &vrm->humanBones[i];
+
+        // defaults
+        dst->axisLength = 0;
+        dst->useDefaultValues = true;
+        dst->center_count = 1;
+        dst->min_count = 1;
+        dst->max_count = 1;
+        dst->node = 0;
+
+        dst->center = (cgltf_float*)calloc(3, sizeof(cgltf_float));
+        dst->max = (cgltf_float*)calloc(3, sizeof(cgltf_float));
+        dst->min = (cgltf_float*)calloc(3, sizeof(cgltf_float));
+
+        const auto found = node_names.find(bone.second.string_value());
+        if (found != node_names.end()) {
+            dst->node = found->second;
+            select_cgltf_vrm_humanoid_bone_bone_v0_0(bone.first.c_str(), &dst->bone);
+        }
+
+        i++;
+    }
+
+    return true;
+}
+
 int main(int argc, char** argv)
 {
     CLI::App app { "glb2vrm: Convert glTF binary (.glb) to VRM" };
 
     std::string input;
     app.add_option("-i,--input", input, "input glTF binary (.glb) file name");
+
+    std::string bones_mapping_file;
+    app.add_option("-b,--bone", bones_mapping_file, "bone to VRM humanBones mapping (JSON)");
 
     CLI11_PARSE(app, argc, argv);
 
@@ -308,7 +418,11 @@ int main(int argc, char** argv)
         std::cout << "[WARN] Invalid glTF data: " << result << std::endl;
     }
 
-    data->has_vrm_v0_0 = true;
+    if (!bones_mapping_file.empty()) {
+        update_bone_mapping(bones_mapping_file, data);
+    }
+
+    ensure_defaults(data);
 
     std::string output = input + ".glb";
     std::string out_json = input + ".json";

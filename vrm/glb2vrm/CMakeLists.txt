@@ -5,7 +5,7 @@ project(glb2vrm)
 include_directories( ${CMAKE_CURRENT_SOURCE_DIR} )
 
 set( EXE_NAME glb2vrm )
-add_executable( ${EXE_NAME} glb2vrm.cpp )
+add_executable( ${EXE_NAME} json11.cpp glb2vrm.cpp )
 set_property( TARGET ${EXE_NAME} PROPERTY CXX_STANDARD 11 )
 if(MSVC)
     target_compile_options(${EXE_NAME} PRIVATE /W4 /WX)

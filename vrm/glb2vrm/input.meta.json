@@ -1,0 +1,15 @@
+{
+  "title": "Test Title",
+  "version": "0.0",
+  "author": "Test Author",
+  "contactInformation": "",
+  "reference": "",
+  "texture": 7,
+  "allowedUserName": "Everyone",
+  "violentUssageName": "Disallow",
+  "sexualUssageName": "Disallow",
+  "commercialUssageName": "Allow",
+  "otherPermissionUrl": "",
+  "licenseName": "Other",
+  "otherLicenseUrl": ""
+}
