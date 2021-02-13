@@ -10,7 +10,7 @@ const supportedVersions = ['0.0', '1.0'];
 
 const fs = require('fs');
 const path = require('path');
-const basepath = path.join(__dirname, 'scheme');
+const basepath = path.join(__dirname, 'schema');
 const prefix   = 'cgltf_';
 const indent   = '\t';
 const indent1  = indent;
