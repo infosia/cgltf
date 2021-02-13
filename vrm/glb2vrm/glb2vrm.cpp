@@ -201,32 +201,11 @@ static void ensure_defaults(cgltf_data* data)
     vrm->specVersion = alloc_chars("0.0");
 }
 
-static bool update_meta(std::string file, cgltf_data* data)
+static void update_meta(const json11::Json::object& meta_object, cgltf_vrm_v0_0* vrm)
 {
-    const auto meta = &data->vrm_v0_0.meta;
+    const auto meta = &vrm->meta;
 
-    std::ifstream f(file, std::ios::in);
-    if (f.fail()) {
-        std::cout << "[ERROR] failed to VRM info file " << file << std::endl;
-        return false;
-    }
-
-    std::ostringstream ss;
-    ss << f.rdbuf();
-    std::string content = ss.str();
-
-    std::string parse_error;
-    const auto json = json11::Json::parse(content, parse_error);
-
-    if (!parse_error.empty()) {
-        std::cout << "[ERROR] failed to parse VRM info file " << file << std::endl;
-        std::cout << parse_error << std::endl;
-        return false;
-    }
-
-    const auto& items = json.object_items();
-
-    for (const auto item : items) {
+    for (const auto item : meta_object) {
         const auto& key = item.first;
         const auto value = item.second.string_value().c_str();
         if (key == "title") {
@@ -259,6 +238,37 @@ static bool update_meta(std::string file, cgltf_data* data)
             if (!select_cgltf_vrm_meta_commercialUssageName_v0_0(value, &meta->commercialUssageName)) {
                 std::cout << "[ERROR] Unknown " << key << ": " << value << std::endl;
             }
+        }
+    }
+}
+
+static bool update_vrm(std::string file, cgltf_data* data)
+{
+    std::ifstream f(file, std::ios::in);
+    if (f.fail()) {
+        std::cout << "[ERROR] failed to VRM config file " << file << std::endl;
+        return false;
+    }
+
+    std::ostringstream ss;
+    ss << f.rdbuf();
+    std::string content = ss.str();
+
+    std::string parse_error;
+    const auto json = json11::Json::parse(content, parse_error);
+
+    if (!parse_error.empty()) {
+        std::cout << "[ERROR] failed to parse VRM config file " << file << std::endl;
+        std::cout << parse_error << std::endl;
+        return false;
+    }
+
+    const auto& items = json.object_items();
+
+    for (const auto item : items) {
+        const auto& key = item.first;
+        if (key == "meta") {
+            update_meta(item.second.object_items(), &data->vrm_v0_0);
         }
     }
 
@@ -350,8 +360,8 @@ int main(int argc, char** argv)
     std::string bones_mapping_file;
     app.add_option("-b,--bone", bones_mapping_file, "bone to VRM humanBones mapping (JSON)");
 
-    std::string meta_file;
-    app.add_option("-m,--meta", meta_file, "VRM meta description (JSON)");
+    std::string config_file;
+    app.add_option("-c,--config", config_file, "VRM configuration (JSON)");
 
     CLI11_PARSE(app, argc, argv);
 
@@ -483,8 +493,8 @@ int main(int argc, char** argv)
         update_bone_mapping(bones_mapping_file, data);
     }
 
-    if (!meta_file.empty()) {
-        update_meta(meta_file, data);
+    if (!config_file.empty()) {
+        update_vrm(config_file, data);
     }
     ensure_defaults(data);
 
