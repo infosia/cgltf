@@ -179,32 +179,90 @@ static void transform_apply(cgltf_node* node, const tm_mat44_t* parent_matrix)
     }
 }
 
-static char* alloc_chars(const char* str) {
+static char* alloc_chars(const char* str)
+{
     const auto length = strlen(str);
-    if (length == 0) {
+    if (length == 0)
         return (char*)calloc(1, 1);
-    }
+
     auto dst = (char*)calloc(length + 1, 1);
     if (dst > 0)
-        strncpy(dst, str, length);    
+        strncpy(dst, str, length);
 
     return dst;
 }
 
-static void ensure_defaults(cgltf_data* data) {
+static void ensure_defaults(cgltf_data* data)
+{
     data->has_vrm_v0_0 = true;
 
     const auto vrm = &data->vrm_v0_0;
-    const auto meta = &vrm->meta;
-
     vrm->exporterVersion = alloc_chars("cgltf+VRM 1.9");
     vrm->specVersion = alloc_chars("0.0");
+}
 
-    meta->title = alloc_chars("");
-    meta->author = alloc_chars("");
-    meta->version = alloc_chars("");
-    meta->contactInformation = alloc_chars("");
-    meta->reference = alloc_chars("");
+static bool update_meta(std::string file, cgltf_data* data)
+{
+    const auto meta = &data->vrm_v0_0.meta;
+
+    std::ifstream f(file, std::ios::in);
+    if (f.fail()) {
+        std::cout << "[ERROR] failed to VRM info file " << file << std::endl;
+        return false;
+    }
+
+    std::ostringstream ss;
+    ss << f.rdbuf();
+    std::string content = ss.str();
+
+    std::string parse_error;
+    const auto json = json11::Json::parse(content, parse_error);
+
+    if (!parse_error.empty()) {
+        std::cout << "[ERROR] failed to parse VRM info file " << file << std::endl;
+        std::cout << parse_error << std::endl;
+        return false;
+    }
+
+    const auto& items = json.object_items();
+
+    for (const auto item : items) {
+        const auto& key = item.first;
+        const auto value = item.second.string_value().c_str();
+        if (key == "title") {
+            meta->title = alloc_chars(value);
+        } else if (key == "version") {
+            meta->version = alloc_chars(value);
+        } else if (key == "author") {
+            meta->author = alloc_chars(value);
+        } else if (key == "contactInformation") {
+            meta->contactInformation = alloc_chars(value);
+        } else if (key == "reference") {
+            meta->reference = alloc_chars(value);
+        } else if (key == "otherPermissionUrl") {
+            meta->otherPermissionUrl = alloc_chars(value);
+        } else if (key == "otherLicenseUrl") {
+            meta->otherLicenseUrl = alloc_chars(value);
+        } else if (key == "allowedUserName") {
+            if (!select_cgltf_vrm_meta_allowedUserName_v0_0(value, &meta->allowedUserName)) {
+                std::cout << "[ERROR] Unknown " << key << ": " << value << std::endl;
+            }
+        } else if (key == "violentUssageName") {
+            if (!select_cgltf_vrm_meta_violentUssageName_v0_0(value, &meta->violentUssageName)) {
+                std::cout << "[ERROR] Unknown " << key << ": " << value << std::endl;
+            }
+        } else if (key == "sexualUssageName") {
+            if (!select_cgltf_vrm_meta_sexualUssageName_v0_0(value, &meta->sexualUssageName)) {
+                std::cout << "[ERROR] Unknown " << key << ": " << value << std::endl;
+            }
+        } else if (key == "commercialUssageName") {
+            if (!select_cgltf_vrm_meta_commercialUssageName_v0_0(value, &meta->commercialUssageName)) {
+                std::cout << "[ERROR] Unknown " << key << ": " << value << std::endl;
+            }
+        }
+    }
+
+    return true;
 }
 
 static bool update_bone_mapping(std::string file, cgltf_data* data)
@@ -229,7 +287,7 @@ static bool update_bone_mapping(std::string file, cgltf_data* data)
     }
 
     const auto vrm = &data->vrm_v0_0.humanoid;
-    const auto bones = json.object_items();
+    const auto& bones = json.object_items();
 
     if (bones.size() == 0) {
         std::cout << "[ERROR] no bone mapping found in " << file << std::endl;
@@ -253,7 +311,7 @@ static bool update_bone_mapping(std::string file, cgltf_data* data)
 
         if (!bone.second.is_string()) {
             std::cout << "[ERROR] bone mapping is not a string. index=" << i << std::endl;
-            return false;            
+            return false;
         }
 
         auto dst = &vrm->humanBones[i];
@@ -291,6 +349,9 @@ int main(int argc, char** argv)
 
     std::string bones_mapping_file;
     app.add_option("-b,--bone", bones_mapping_file, "bone to VRM humanBones mapping (JSON)");
+
+    std::string meta_file;
+    app.add_option("-m,--meta", meta_file, "VRM meta description (JSON)");
 
     CLI11_PARSE(app, argc, argv);
 
@@ -422,6 +483,9 @@ int main(int argc, char** argv)
         update_bone_mapping(bones_mapping_file, data);
     }
 
+    if (!meta_file.empty()) {
+        update_meta(meta_file, data);
+    }
     ensure_defaults(data);
 
     std::string output = input + ".glb";
