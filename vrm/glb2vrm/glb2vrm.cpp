@@ -192,6 +192,26 @@ static char* alloc_chars(const char* str)
     return dst;
 }
 
+static bool ensure_degreemap(cgltf_vrm_firstperson_degreemap_v0_0* degreemap)
+{
+    if (degreemap->curve_count == 0) {
+        degreemap->curve_count = 8;
+        degreemap->curve = (cgltf_float*)malloc(8 * sizeof(cgltf_float));
+        degreemap->xRange = 90;
+        degreemap->yRange = 10;
+
+        degreemap->curve[0] = 0;
+        degreemap->curve[1] = 0;
+        degreemap->curve[2] = 0;
+        degreemap->curve[3] = 1;
+        degreemap->curve[4] = 1;
+        degreemap->curve[5] = 1;
+        degreemap->curve[6] = 1;
+        degreemap->curve[7] = 0;
+    }
+    return true;
+}
+
 static void ensure_defaults(cgltf_data* data)
 {
     data->has_vrm_v0_0 = true;
@@ -199,6 +219,35 @@ static void ensure_defaults(cgltf_data* data)
     const auto vrm = &data->vrm_v0_0;
     vrm->exporterVersion = alloc_chars("cgltf+VRM 1.9");
     vrm->specVersion = alloc_chars("0.0");
+
+    ensure_degreemap(&vrm->firstPerson.lookAtHorizontalInner);
+    ensure_degreemap(&vrm->firstPerson.lookAtHorizontalOuter);
+    ensure_degreemap(&vrm->firstPerson.lookAtVerticalDown);
+    ensure_degreemap(&vrm->firstPerson.lookAtVerticalUp);
+
+    if (vrm->firstPerson.meshAnnotations_count == 0) {
+        vrm->firstPerson.meshAnnotations_count = data->meshes_count;
+        vrm->firstPerson.meshAnnotations = (cgltf_vrm_firstperson_meshannotation_v0_0*)calloc(data->meshes_count, sizeof(cgltf_vrm_firstperson_meshannotation_v0_0));
+        for (cgltf_size i = 0; i < data->meshes_count; ++i) {
+            vrm->firstPerson.meshAnnotations[i].mesh = static_cast<cgltf_int>(i);
+            vrm->firstPerson.meshAnnotations[i].firstPersonFlag = alloc_chars("Auto");
+        }
+    }
+
+    if (vrm->firstPerson.firstPersonBoneOffset_count == 0) {
+        vrm->firstPerson.firstPersonBoneOffset_count = 3;
+        vrm->firstPerson.firstPersonBoneOffset = (cgltf_float*)calloc(3, sizeof(cgltf_float));
+    }
+
+    if (vrm->materialProperties_count == 0) {
+        vrm->materialProperties_count = data->materials_count;
+        vrm->materialProperties = (cgltf_vrm_material_v0_0*)calloc(data->materials_count, sizeof(cgltf_vrm_material_v0_0));
+        for (cgltf_size i = 0; i < data->materials_count; ++i) {
+            vrm->materialProperties[i].name = alloc_chars(data->materials[i].name);
+            vrm->materialProperties[i].shader = alloc_chars("VRM_USE_GLTFSHADER");
+            vrm->materialProperties[i].renderQueue = 2000;
+        }
+    }
 }
 
 static void update_meta(const json11::Json::object& meta_object, cgltf_vrm_v0_0* vrm)
@@ -296,7 +345,8 @@ static bool update_bone_mapping(std::string file, cgltf_data* data)
         return false;
     }
 
-    const auto vrm = &data->vrm_v0_0.humanoid;
+    const auto vrm = &data->vrm_v0_0;
+    const auto humanoid = &vrm->humanoid;
     const auto& bones = json.object_items();
 
     if (bones.size() == 0) {
@@ -304,8 +354,8 @@ static bool update_bone_mapping(std::string file, cgltf_data* data)
         return false;
     }
 
-    vrm->humanBones_count = bones.size();
-    vrm->humanBones = (cgltf_vrm_humanoid_bone_v0_0*)malloc(sizeof(cgltf_vrm_humanoid_bone_v0_0) * bones.size());
+    humanoid->humanBones_count = bones.size();
+    humanoid->humanBones = (cgltf_vrm_humanoid_bone_v0_0*)malloc(sizeof(cgltf_vrm_humanoid_bone_v0_0) * bones.size());
 
     std::unordered_map<std::string, cgltf_int> node_names;
     for (cgltf_size i = 0; i < data->nodes_count; ++i) {
@@ -313,6 +363,27 @@ static bool update_bone_mapping(std::string file, cgltf_data* data)
         if (node->name != nullptr && strlen(node->name) > 0) {
             std::string name = node->name;
             node_names.emplace(name, static_cast<cgltf_int>(i));
+        }
+
+        // fill in default values
+        if (!node->has_translation) {
+            node->translation[0] = 0;
+            node->translation[1] = 0;
+            node->translation[2] = 0;
+            node->has_translation = true;
+        }
+        if (!node->has_rotation) {
+            node->rotation[0] = 0;
+            node->rotation[1] = 0;
+            node->rotation[2] = 0;
+            node->rotation[3] = 1;
+            node->has_rotation = true;
+        }
+        if (!node->has_scale) {
+            node->scale[0] = 1;
+            node->scale[1] = 1;
+            node->scale[2] = 1;
+            node->has_scale = true;
         }
     }
 
@@ -324,7 +395,7 @@ static bool update_bone_mapping(std::string file, cgltf_data* data)
             return false;
         }
 
-        auto dst = &vrm->humanBones[i];
+        auto dst = &humanoid->humanBones[i];
 
         // defaults
         dst->axisLength = 0;
@@ -342,6 +413,10 @@ static bool update_bone_mapping(std::string file, cgltf_data* data)
         if (found != node_names.end()) {
             dst->node = found->second;
             select_cgltf_vrm_humanoid_bone_bone_v0_0(bone.first.c_str(), &dst->bone);
+
+            if (bone.first == "head") {
+                vrm->firstPerson.firstPersonBone = found->second;
+            }
         }
 
         i++;
@@ -498,7 +573,7 @@ int main(int argc, char** argv)
     }
     ensure_defaults(data);
 
-    std::string output = input + ".glb";
+    std::string output = input + ".vrm";
     std::string out_json = input + ".json";
     std::string out_bin = input + ".bin";
 
