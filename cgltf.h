@@ -1806,6 +1806,7 @@ void cgltf_free(cgltf_data* data)
 			for (cgltf_size k = 0; k < data->meshes[i].primitives[j].attributes_count; ++k)
 			{
 				data->memory.free(data->memory.user_data, data->meshes[i].primitives[j].attributes[k].name);
+				data->memory.free(data->memory.user_data, data->meshes[i].primitives[j].attributes[k].value);
 			}
 
 			data->memory.free(data->memory.user_data, data->meshes[i].primitives[j].attributes);
