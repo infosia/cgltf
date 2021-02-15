@@ -153,19 +153,19 @@ static void transform_apply(cgltf_node* node, const tm_mat44_t* parent_matrix)
     const tm_vec3_t scale = { node->scale[0], node->scale[1], node->scale[2] };
     const tm_vec4_t rot = { node->rotation[0], node->rotation[1], node->rotation[2], node->rotation[3] };
 
-    tm_vec3_t pos_unused, scale_unused;
-    tm_vec4_t rot_parent;
-    tm_mat44_to_translation_quaternion_scale(&pos_unused, &rot_parent, &scale_unused, parent_matrix);
-
-    tm_vec3_t newpos = tm_quaternion_rotate_vec3(rot_parent, pos);
-
     tm_mat44_t self, bind_matrix;
     tm_mat44_from_translation_quaternion_scale(&self, pos, rot, scale);
     tm_mat44_mul(&bind_matrix, &self, parent_matrix);
 
-    node->translation[0] = -newpos.x;
-    node->translation[1] = newpos.y;
-    node->translation[2] = -newpos.z;
+    tm_vec3_t pos_unused, scale_parent;
+    tm_vec4_t rot_parent;
+    tm_mat44_to_translation_quaternion_scale(&pos_unused, &rot_parent, &scale_parent, parent_matrix);
+
+    tm_vec3_t newpos = tm_quaternion_rotate_vec3(rot_parent, pos);
+
+    node->translation[0] = -newpos.x * scale_parent.x;
+    node->translation[1] =  newpos.y * scale_parent.x;
+    node->translation[2] = -newpos.z * scale_parent.x;
     node->rotation[0] = 0;
     node->rotation[1] = 0;
     node->rotation[2] = 0;
@@ -196,7 +196,7 @@ static bool ensure_degreemap(cgltf_vrm_firstperson_degreemap_v0_0* degreemap)
 {
     if (degreemap->curve_count == 0) {
         degreemap->curve_count = 8;
-        degreemap->curve = (cgltf_float*)malloc(8 * sizeof(cgltf_float));
+        degreemap->curve = (cgltf_float*)calloc(8, sizeof(cgltf_float));
         degreemap->xRange = 90;
         degreemap->yRange = 10;
 
@@ -217,8 +217,15 @@ static void ensure_defaults(cgltf_data* data)
     data->has_vrm_v0_0 = true;
 
     const auto vrm = &data->vrm_v0_0;
-    vrm->exporterVersion = alloc_chars("cgltf+VRM 1.9");
+    vrm->exporterVersion = alloc_chars("cgltf+vrm 1.9");
     vrm->specVersion = alloc_chars("0.0");
+
+    // VRM does not use animation
+    if (data->animations_count > 0) {
+        data->memory.free(data->memory.user_data, data->animations);
+        data->animations_count = 0;
+        data->animations = nullptr;
+    }
 
     ensure_degreemap(&vrm->firstPerson.lookAtHorizontalInner);
     ensure_degreemap(&vrm->firstPerson.lookAtHorizontalOuter);
@@ -355,7 +362,7 @@ static bool update_bone_mapping(std::string file, cgltf_data* data)
     }
 
     humanoid->humanBones_count = bones.size();
-    humanoid->humanBones = (cgltf_vrm_humanoid_bone_v0_0*)malloc(sizeof(cgltf_vrm_humanoid_bone_v0_0) * bones.size());
+    humanoid->humanBones = (cgltf_vrm_humanoid_bone_v0_0*)calloc(bones.size(), sizeof(cgltf_vrm_humanoid_bone_v0_0));
 
     std::unordered_map<std::string, cgltf_int> node_names;
     for (cgltf_size i = 0; i < data->nodes_count; ++i) {
