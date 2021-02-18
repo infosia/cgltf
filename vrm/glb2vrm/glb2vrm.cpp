@@ -331,35 +331,10 @@ static bool update_vrm(std::string file, cgltf_data* data)
     return true;
 }
 
-static bool update_bone_mapping(std::string file, cgltf_data* data)
+static bool update_bones(const json11::Json::object& bones, cgltf_data* data)
 {
-    std::ifstream f(file, std::ios::in);
-    if (f.fail()) {
-        std::cout << "[ERROR] failed to read bone mapping file " << file << std::endl;
-        return false;
-    }
-
-    std::ostringstream ss;
-    ss << f.rdbuf();
-    std::string content = ss.str();
-
-    std::string parse_error;
-    const auto json = json11::Json::parse(content, parse_error);
-
-    if (!parse_error.empty()) {
-        std::cout << "[ERROR] failed to parse bone mapping file " << file << std::endl;
-        std::cout << parse_error << std::endl;
-        return false;
-    }
-
     const auto vrm = &data->vrm_v0_0;
     const auto humanoid = &vrm->humanoid;
-    const auto& bones = json.object_items();
-
-    if (bones.size() == 0) {
-        std::cout << "[ERROR] no bone mapping found in " << file << std::endl;
-        return false;
-    }
 
     humanoid->humanBones_count = bones.size();
     humanoid->humanBones = (cgltf_vrm_humanoid_bone_v0_0*)calloc(bones.size(), sizeof(cgltf_vrm_humanoid_bone_v0_0));
@@ -394,6 +369,7 @@ static bool update_bone_mapping(std::string file, cgltf_data* data)
         }
     }
 
+    cgltf_node* bone_hips = nullptr;
     cgltf_size i = 0;
     for (const auto bone : bones) {
 
@@ -416,17 +392,80 @@ static bool update_bone_mapping(std::string file, cgltf_data* data)
         dst->max = (cgltf_float*)calloc(3, sizeof(cgltf_float));
         dst->min = (cgltf_float*)calloc(3, sizeof(cgltf_float));
 
-        const auto found = node_names.find(bone.second.string_value());
+        const auto bone_name = bone.second.string_value();
+        const auto found = node_names.find(bone_name);
         if (found != node_names.end()) {
             dst->node = found->second;
             select_cgltf_vrm_humanoid_bone_bone_v0_0(bone.first.c_str(), &dst->bone);
 
             if (bone.first == "head") {
                 vrm->firstPerson.firstPersonBone = found->second;
+            } else if (bone.first == "hips") {
+                bone_hips = &data->nodes[found->second];
             }
+        } else {
+            std::cout << "[ERROR] bone is not found for " << bone_name << std::endl;
         }
 
         i++;
+    }
+
+    // clear translation for 'non-joint' node
+    if (bone_hips != nullptr) {
+        tm_vec3_t offset_translation = { 0, 0, 0 };
+        auto node = bone_hips->parent;
+        while (node != nullptr) {
+            offset_translation.x += node->translation[0];
+            offset_translation.y += node->translation[1];
+            offset_translation.z += node->translation[2];
+
+            node->translation[0] = 0;
+            node->translation[1] = 0;
+            node->translation[2] = 0;
+            node = node->parent;
+        }
+        bone_hips->translation[0] += offset_translation.x;
+        bone_hips->translation[1] += offset_translation.y;
+        bone_hips->translation[2] += offset_translation.z;
+    }
+
+    return true;
+}
+
+static bool update_bone_mapping(std::string file, cgltf_data* data)
+{
+    std::ifstream f(file, std::ios::in);
+    if (f.fail()) {
+        std::cout << "[ERROR] failed to read bone mapping file " << file << std::endl;
+        return false;
+    }
+
+    std::ostringstream ss;
+    ss << f.rdbuf();
+    std::string content = ss.str();
+
+    std::string parse_error;
+    const auto json = json11::Json::parse(content, parse_error);
+
+    if (!parse_error.empty()) {
+        std::cout << "[ERROR] failed to parse bone mapping file " << file << std::endl;
+        std::cout << parse_error << std::endl;
+        return false;
+    }
+
+    const auto& items = json.object_items();
+
+    // bone translations are required
+    const auto bones_it = items.find("bones");
+    if (bones_it != items.end()) {
+        const auto bones = bones_it->second.object_items();
+
+        if (bones.size() == 0) {
+            std::cout << "[ERROR] no bone mapping found in " << file << std::endl;
+            return false;
+        }
+
+        update_bones(bones, data);
     }
 
     return true;
@@ -580,7 +619,7 @@ int main(int argc, char** argv)
     }
     ensure_defaults(data);
 
-    std::string output = input + ".vrm";
+    std::string output = input + ".glb";
     std::string out_json = input + ".json";
     std::string out_bin = input + ".bin";
 
