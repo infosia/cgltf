@@ -57,7 +57,7 @@ static void f3_max(cgltf_float* a, cgltf_float* b, cgltf_float* out)
     out[2] = a[2] > b[2] ? a[2] : b[2];
 }
 
-static void vrm_vec3_convert_coord(cgltf_accessor* accessor)
+static void vrm_vec3_convert_coord(cgltf_accessor* accessor, const bool Z_UP)
 {
     uint8_t* buffer_data = (uint8_t*)accessor->buffer_view->buffer->data + accessor->buffer_view->offset + accessor->offset;
 
@@ -68,8 +68,18 @@ static void vrm_vec3_convert_coord(cgltf_accessor* accessor)
 
     for (cgltf_size i = 0; i < accessor->count; ++i) {
         cgltf_float* element = (cgltf_float*)(buffer_data + (accessor->stride * i));
+
         element[0] = -element[0];
         element[2] = -element[2];
+
+        if (Z_UP) {
+            tm_vec4_t rot = { 0.707f, 0.f, 0.f, 0.707f };
+            tm_vec3_t pos = { element[0], element[1], element[2] };
+            pos = tm_quaternion_rotate_vec3(rot, pos);
+            element[0] = pos.x;
+            element[1] = pos.y;
+            element[2] = pos.z;
+        }
 
         f3_max(element, accessor->max, accessor->max);
         f3_min(element, accessor->min, accessor->min);
@@ -484,6 +494,9 @@ int main(int argc, char** argv)
     std::string config_file;
     app.add_option("-c,--config", config_file, "VRM configuration (JSON)");
 
+    bool Z_UP = false;
+    app.add_flag("-z,--zup", Z_UP, "Fix mesh orientation");
+
     CLI11_PARSE(app, argc, argv);
 
     cgltf_options options = {};
@@ -522,10 +535,10 @@ int main(int argc, char** argv)
                 }
                 if (attr->type == cgltf_attribute_type_position) {
                     std::cout << "[INFO] " << accessor->count << " vertices" << std::endl;
-                    vrm_vec3_convert_coord(accessor);
+                    vrm_vec3_convert_coord(accessor, Z_UP);
                 } else if (attr->type == cgltf_attribute_type_normal) {
                     std::cout << "[INFO] " << accessor->count << " normals" << std::endl;
-                    vrm_vec3_convert_coord(accessor);
+                    vrm_vec3_convert_coord(accessor, Z_UP);
                 }
                 accessor_coord_done.emplace(accessor);
             }
@@ -540,10 +553,10 @@ int main(int argc, char** argv)
                     }
                     if (attr->type == cgltf_attribute_type_position) {
                         std::cout << "[INFO] " << accessor->count << " morph vertices" << std::endl;
-                        vrm_vec3_convert_coord(accessor);
+                        vrm_vec3_convert_coord(accessor, Z_UP);
                     } else if (attr->type == cgltf_attribute_type_normal) {
                         std::cout << "[INFO] " << accessor->count << " morph normals" << std::endl;
-                        vrm_vec3_convert_coord(accessor);
+                        vrm_vec3_convert_coord(accessor, Z_UP);
                     }
                     accessor_coord_done.emplace(accessor);
                 }
