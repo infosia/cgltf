@@ -62,8 +62,10 @@ static void vrm_vec3_convert_coord(cgltf_node* node, cgltf_accessor* accessor)
     uint8_t* buffer_data = (uint8_t*)accessor->buffer_view->buffer->data + accessor->buffer_view->offset + accessor->offset;
 
     accessor->max[0] = -FLT_MAX;
+    accessor->max[1] = -FLT_MAX;
     accessor->max[2] = -FLT_MAX;
     accessor->min[0] = FLT_MAX;
+    accessor->min[1] = FLT_MAX;
     accessor->min[2] = FLT_MAX;
 
     for (cgltf_size i = 0; i < accessor->count; ++i) {
@@ -571,8 +573,10 @@ int main(int argc, char** argv)
         uint8_t* buffer_data = (uint8_t*)accessor->buffer_view->buffer->data + accessor->buffer_view->offset + accessor->offset;
 
         accessor->max[12] = -FLT_MAX;
+        accessor->max[13] = -FLT_MAX;
         accessor->max[14] = -FLT_MAX;
         accessor->min[12] = FLT_MAX;
+        accessor->min[13] = FLT_MAX;
         accessor->min[14] = FLT_MAX;
 
         for (cgltf_size j = 0; j < skin->joints_count; ++j) {
