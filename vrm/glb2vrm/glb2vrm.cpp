@@ -57,7 +57,7 @@ static void f3_max(cgltf_float* a, cgltf_float* b, cgltf_float* out)
     out[2] = a[2] > b[2] ? a[2] : b[2];
 }
 
-static void vrm_vec3_convert_coord(cgltf_accessor* accessor, const bool Z_UP)
+static void vrm_vec3_convert_coord(cgltf_node* node, cgltf_accessor* accessor)
 {
     uint8_t* buffer_data = (uint8_t*)accessor->buffer_view->buffer->data + accessor->buffer_view->offset + accessor->offset;
 
@@ -69,17 +69,24 @@ static void vrm_vec3_convert_coord(cgltf_accessor* accessor, const bool Z_UP)
     for (cgltf_size i = 0; i < accessor->count; ++i) {
         cgltf_float* element = (cgltf_float*)(buffer_data + (accessor->stride * i));
 
-        element[0] = -element[0];
-        element[2] = -element[2];
+        if (node->has_scale) {
+            element[0] *= node->scale[0];
+            element[1] *= node->scale[1];
+            element[2] *= node->scale[2];
+        }
 
-        if (Z_UP) {
-            tm_vec4_t rot = { 0.707f, 0.f, 0.f, 0.707f };
+        if (node->has_rotation) {
             tm_vec3_t pos = { element[0], element[1], element[2] };
+            tm_vec4_t rot = { node->rotation[0], node->rotation[1], node->rotation[2], node->rotation[3] };
             pos = tm_quaternion_rotate_vec3(rot, pos);
             element[0] = pos.x;
             element[1] = pos.y;
             element[2] = pos.z;
         }
+
+        element[0] = -element[0];
+        element[1] =  element[1];
+        element[2] = -element[2];
 
         f3_max(element, accessor->max, accessor->max);
         f3_min(element, accessor->min, accessor->min);
@@ -379,7 +386,6 @@ static bool update_bones(const json11::Json::object& bones, cgltf_data* data)
         }
     }
 
-    cgltf_node* bone_hips = nullptr;
     cgltf_size i = 0;
     for (const auto bone : bones) {
 
@@ -410,33 +416,12 @@ static bool update_bones(const json11::Json::object& bones, cgltf_data* data)
 
             if (bone.first == "head") {
                 vrm->firstPerson.firstPersonBone = found->second;
-            } else if (bone.first == "hips") {
-                bone_hips = &data->nodes[found->second];
             }
         } else {
             std::cout << "[ERROR] bone is not found for " << bone_name << std::endl;
         }
 
         i++;
-    }
-
-    // clear translation for 'non-joint' node
-    if (bone_hips != nullptr) {
-        tm_vec3_t offset_translation = { 0, 0, 0 };
-        auto node = bone_hips->parent;
-        while (node != nullptr) {
-            offset_translation.x += node->translation[0];
-            offset_translation.y += node->translation[1];
-            offset_translation.z += node->translation[2];
-
-            node->translation[0] = 0;
-            node->translation[1] = 0;
-            node->translation[2] = 0;
-            node = node->parent;
-        }
-        bone_hips->translation[0] += offset_translation.x;
-        bone_hips->translation[1] += offset_translation.y;
-        bone_hips->translation[2] += offset_translation.z;
     }
 
     return true;
@@ -494,9 +479,6 @@ int main(int argc, char** argv)
     std::string config_file;
     app.add_option("-c,--config", config_file, "VRM configuration (JSON)");
 
-    bool Z_UP = false;
-    app.add_flag("-z,--zup", Z_UP, "Fix mesh orientation");
-
     CLI11_PARSE(app, argc, argv);
 
     cgltf_options options = {};
@@ -516,8 +498,12 @@ int main(int argc, char** argv)
 
     std::cout << "[INFO] Converting " << input << std::endl;
     std::set<cgltf_accessor*> accessor_coord_done;
-    for (cgltf_size i = 0; i < data->meshes_count; ++i) {
-        const auto mesh = &data->meshes[i];
+    for (cgltf_size i = 0; i < data->nodes_count; ++i) {
+        const auto node = &data->nodes[i];
+        const auto mesh = node->mesh;
+
+        if (mesh == nullptr)
+            continue;
 
         if (mesh->name != nullptr) {
             std::cout << "[INFO] Processing " << mesh->name << std::endl;
@@ -535,10 +521,10 @@ int main(int argc, char** argv)
                 }
                 if (attr->type == cgltf_attribute_type_position) {
                     std::cout << "[INFO] " << accessor->count << " vertices" << std::endl;
-                    vrm_vec3_convert_coord(accessor, Z_UP);
+                    vrm_vec3_convert_coord(node, accessor);
                 } else if (attr->type == cgltf_attribute_type_normal) {
                     std::cout << "[INFO] " << accessor->count << " normals" << std::endl;
-                    vrm_vec3_convert_coord(accessor, Z_UP);
+                    vrm_vec3_convert_coord(node, accessor);
                 }
                 accessor_coord_done.emplace(accessor);
             }
@@ -553,10 +539,10 @@ int main(int argc, char** argv)
                     }
                     if (attr->type == cgltf_attribute_type_position) {
                         std::cout << "[INFO] " << accessor->count << " morph vertices" << std::endl;
-                        vrm_vec3_convert_coord(accessor, Z_UP);
+                        vrm_vec3_convert_coord(node, accessor);
                     } else if (attr->type == cgltf_attribute_type_normal) {
                         std::cout << "[INFO] " << accessor->count << " morph normals" << std::endl;
-                        vrm_vec3_convert_coord(accessor, Z_UP);
+                        vrm_vec3_convert_coord(node, accessor);
                     }
                     accessor_coord_done.emplace(accessor);
                 }
