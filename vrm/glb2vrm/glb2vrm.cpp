@@ -77,6 +77,12 @@ static void vrm_vec3_convert_coord(cgltf_node* node, cgltf_accessor* accessor)
             element[2] *= node->scale[2];
         }
 
+        if (node->has_translation) {
+            element[0] += node->translation[0];
+            element[1] += node->translation[1];
+            element[2] += node->translation[2];
+        }
+
         if (node->has_rotation) {
             tm_vec3_t pos = { element[0], element[1], element[2] };
             tm_vec4_t rot = { node->rotation[0], node->rotation[1], node->rotation[2], node->rotation[3] };
@@ -388,6 +394,7 @@ static bool update_bones(const json11::Json::object& bones, cgltf_data* data)
         }
     }
 
+    cgltf_node* bone_hips = nullptr;
     cgltf_size i = 0;
     for (const auto bone : bones) {
 
@@ -418,12 +425,33 @@ static bool update_bones(const json11::Json::object& bones, cgltf_data* data)
 
             if (bone.first == "head") {
                 vrm->firstPerson.firstPersonBone = found->second;
+            } else if (bone.first == "hips") {
+                bone_hips = &data->nodes[found->second];
             }
         } else {
             std::cout << "[ERROR] bone is not found for " << bone_name << std::endl;
         }
 
         i++;
+    }
+
+    // clear translation of hips parents
+    if (bone_hips != nullptr) {
+        tm_vec3_t offset_translation = { 0, 0, 0 };
+        auto node = bone_hips->parent;
+        while (node != nullptr) {
+            offset_translation.x += node->translation[0];
+            offset_translation.y += node->translation[1];
+            offset_translation.z += node->translation[2];
+
+            node->translation[0] = 0;
+            node->translation[1] = 0;
+            node->translation[2] = 0;
+            node = node->parent;
+        }
+        bone_hips->translation[0] += offset_translation.x;
+        bone_hips->translation[1] += offset_translation.y;
+        bone_hips->translation[2] += offset_translation.z;
     }
 
     return true;
