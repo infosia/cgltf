@@ -189,8 +189,8 @@ static void transform_apply(cgltf_node* node, const tm_mat44_t* parent_matrix)
     tm_vec3_t newpos = tm_quaternion_rotate_vec3(rot_parent, pos);
 
     node->translation[0] = -newpos.x * scale_parent.x;
-    node->translation[1] =  newpos.y * scale_parent.x;
-    node->translation[2] = -newpos.z * scale_parent.x;
+    node->translation[1] =  newpos.y * scale_parent.y;
+    node->translation[2] = -newpos.z * scale_parent.z;
     node->rotation[0] = 0;
     node->rotation[1] = 0;
     node->rotation[2] = 0;
